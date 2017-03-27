@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.ejang.restaurantwatch.BrowseActivity"
+    tools:showIn="@layout/app_bar_browse"
+    android:orientation="vertical"
+    android:background="@color/colorGreyBackground">
+
+    <!--<SearchView-->
+        <!--android:id="@+id/restaurants_search"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignParentStart="true"-->
+        <!--android:background="@color/colorWhite"-->
+        <!--android:layout_margin="8dp"-->
+        <!--android:elevation="2dp"-->
+        <!--/>-->
+
+    <TextView
+        android:id="@+id/listview_caption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="5dp"
+        android:textSize="16sp"
+        android:background="@drawable/browse_header"
+        android:textColor="@color/colorWhite"
+        android:text="Restaurants in Surrey, BC"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="74dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@id/listview_caption">
+
+        <RelativeLayout
+            android:id="@+id/restaurant_listview_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/listview_caption"
+            android:background="@color/colorWhite"
+            android:layout_weight="1">
+
+            <ListView android:id="@+id/restaurant_listview"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:divider="@color/colorGreyBackground"
+                android:dividerHeight="3.0sp" />
+
+            <RelativeLayout
+                android:id="@+id/loadingPanel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center">
+
+                <ProgressBar
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:indeterminate="true" />
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="horizontal" android:layout_width="match_parent"
+            android:background="@color/colorGreyBackground"
+            android:layout_height="wrap_content"
+            android:id="@+id/search_options">
+
+            <Button
+                android:id="@+id/advanced_search_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/restaurants_search"
+                android:layout_weight="1"
+                android:text="Filter"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:textColor="@color/colorWhite"
+                android:background="@drawable/button_ripple_effect"
+                />
+            <!--android:layout_marginLeft="8dp"-->
+            <!--android:layout_marginRight="3dp"-->
+            <ImageView
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="@color/colorGreyBackground"/>
+
+            <Button
+                android:id="@+id/sort_search_button"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Order"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:layout_below="@+id/restaurants_search"
+                android:layout_alignParentEnd="true"
+                android:textColor="@color/colorWhite"
+                android:background="@drawable/button_ripple_effect"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <com.arlib.floatingsearchview.FloatingSearchView
+        android:id="@+id/restaurants_search"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:floatingSearch_searchBarMarginLeft="8dp"
+        app:floatingSearch_searchBarMarginTop="8dp"
+        app:floatingSearch_searchBarMarginRight="8dp"
+        app:floatingSearch_searchHint="Search..."
+        app:floatingSearch_suggestionsListAnimDuration="250"
+        app:floatingSearch_showSearchKey="false"
+        app:floatingSearch_leftActionMode="showSearch"
+        app:floatingSearch_close_search_on_keyboard_dismiss="true"/>
+
+</RelativeLayout>

@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Restaurant Watch</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="url_all_inspections">http://data.surrey.ca/api/action/datastore_search?resource_id=30b38b66-649f-4507-a632-d5f6f5fe87f1&amp;limit=50000</string>
+
+    <string name="url_all_restaurants">http://data.surrey.ca/api/action/datastore_search?resource_id=0e5d04a2-be9b-40fe-8de2-e88362ea916b&amp;limit=50000</string>
+
+    <string name="high_hazard">High hazard</string>
+    <string name="mod_hazard">Moderate hazard</string>
+    <string name="low_hazard">Low hazard</string>
+    <string name="unknown_hazard">Unknown hazard</string>
+    <string name="num_inspections">Number of inspections: %1$s</string>
+    <string name="last_inspection_date">Last inspection date: %1$s</string>
+</resources>

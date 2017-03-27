@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:id="@+id/main" android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_camera"
+            android:icon="@mipmap/ic_restaurant"
+            android:title="Restaurants" />
+        <!--will add icons for favorites and notifications-->
+    </group>
+
+    <group android:id="@+id/misc">
+        <item
+            android:id="@+id/nav_share"
+            android:icon="@mipmap/ic_about"
+            android:title="About" />
+        <item
+            android:id="@+id/nav_send"
+            android:icon="@drawable/ic_menu_send"
+            android:title="Send Feedback" />
+    </group>
+
+
+</menu>
