@@ -29,8 +29,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-// TODO: Add the nice looking toolbar from github
-// TODO: Implement dynamic search with that toolbar
+import android.content.Intent;
+
 // TODO: Add alert dialog UI for filter + implement it
 // TODO: Add alert dialog UI for sort + implement + make header reflect it
 // TODO: Consider using sharedpreferences for loading arrayadapter if it's faster than making request
@@ -47,6 +47,7 @@ public class BrowseActivity extends AppCompatActivity
     RestaurantListAdapter restaurantListAdapter;
     ListView restaurantList;
     HashMap<String, ArrayList<InspectionResult>> inspectionData;
+    ArrayList<Restaurant> allRestaurants;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,32 +60,12 @@ public class BrowseActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-//
-//        final SearchView searchView = (SearchView)findViewById(R.id.restaurants_search);
-//        searchView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                searchView.setIconified(false);
-//            }
-//        });
 
-        FloatingSearchView mSearchView = (FloatingSearchView)findViewById(R.id.restaurants_search);
-        mSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener() {
-            @Override
-            public void onSearchTextChanged(String oldQuery, final String newQuery) {
-
-                //get suggestions based on newQuery
-
-                //pass them on to the search view
-            }
-        });
-
-        // Initialize all of the restaurant and inspection that I need
         initializeAllRestaurants();
 
     }
@@ -114,7 +95,8 @@ public class BrowseActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_refresh) {
+            initializeAllRestaurants();
             return true;
         }
 
@@ -127,12 +109,14 @@ public class BrowseActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
+        if (id == R.id.nav_restaurant) {
             // Handle the camera action
 
-        } else if (id == R.id.nav_share) {
+        } else if (id == R.id.nav_about) {
+            Intent newAct = new Intent(this, AboutActivity.class);
+            startActivity(newAct);
 
-        } else if (id == R.id.nav_send) {
+        } else if (id == R.id.nav_about) {
 
         }
 
@@ -144,6 +128,7 @@ public class BrowseActivity extends AppCompatActivity
     public void initializeAllRestaurants() {
         // Reset restaurant data and fetch all info from API
         inspectionData = new HashMap<>();
+        allRestaurants = new ArrayList<>();
         restaurantListAdapter = null;
         restaurantList = null;
 
@@ -158,8 +143,8 @@ public class BrowseActivity extends AppCompatActivity
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(JSONObject response)
-                    {
+                    public void onResponse(JSONObject response) {
+                        // Start AsyncTask to do the organize restaurant data in background.
                         new DownloadAllInspections(BrowseActivity.this).execute(response);
                     }
                 }, new Response.ErrorListener() {
@@ -176,7 +161,6 @@ public class BrowseActivity extends AppCompatActivity
     }
 
     public void addAllRestaurants() {
-
         // Set up request to get all inspection data. On response, set the adapter and listview
         // in this UI thread. This isn't heavy-weight enough to need an async task currently.
         String url = getString(R.string.url_all_restaurants);
@@ -187,12 +171,10 @@ public class BrowseActivity extends AppCompatActivity
                     @Override
                     public void onResponse(JSONObject response) {
                         System.err.println("Got second response at: " + System.currentTimeMillis());
-                        ArrayList<Restaurant> allRestaurants = new ArrayList<>();
                         try {
                             JSONArray restaurants = response.getJSONObject("result").getJSONArray("records");
 
-                            for (int i = 0 ; i < restaurants.length() ; i++)
-                            {
+                            for (int i = 0; i < restaurants.length(); i++) {
                                 JSONObject restaurant = restaurants.getJSONObject(i);
                                 String name = restaurant.getString("NAME");
                                 String addr = restaurant.getString("PHYSICALADDRESS");
@@ -200,14 +182,11 @@ public class BrowseActivity extends AppCompatActivity
                                 String longitude = restaurant.getString("LONGITUDE");
                                 String trackingID = restaurant.getString("TRACKINGNUMBER");
 
-                                if (inspectionData.containsKey(trackingID))
-                                {
+                                if (inspectionData.containsKey(trackingID)) {
                                     Restaurant restaurantEntry = new Restaurant(name, addr, latitude,
                                             longitude, trackingID, inspectionData.get(trackingID));
                                     allRestaurants.add(restaurantEntry);
-                                }
-                                else
-                                {
+                                } else {
                                     Restaurant restaurantEntry = new Restaurant(name, addr, latitude,
                                             longitude, trackingID, null);
                                     allRestaurants.add(restaurantEntry);
@@ -226,6 +205,7 @@ public class BrowseActivity extends AppCompatActivity
                                 }
                             });
 
+                            initializeSearchBar();
 
                         } catch (JSONException e) {
                             System.err.println("CAUGHT AN EXCEPTION: ");
@@ -243,6 +223,23 @@ public class BrowseActivity extends AppCompatActivity
 
         queue.add(jsonRequest);
         System.err.println("Made second http request at: " + System.currentTimeMillis());
+    }
+
+    public void initializeSearchBar()
+    {
+        // Initialize the search bar functionality. If user input text into the bar before the
+        // RestaurantListAdapter was initialized, apply the filter right away.
+        FloatingSearchView mSearchView = (FloatingSearchView) findViewById(R.id.restaurants_search);
+        BrowseActivity.this.restaurantListAdapter.getFilter().filter(mSearchView.getQuery());
+
+        mSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener()
+        {
+            @Override
+            public void onSearchTextChanged(String oldQuery, final String newQuery)
+            {
+                BrowseActivity.this.restaurantListAdapter.getFilter().filter(newQuery);
+            }
+        });
     }
 
 }

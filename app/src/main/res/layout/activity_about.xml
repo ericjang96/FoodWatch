@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.ejang.restaurantwatch.AboutActivity">
+
+    <TextView
+        android:id="@+id/about_blurb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Thank you for using FoodWatch Beta. \n\nThis version uses restaurant and inspection data
+from the open data catalogue of City of Surrey. More cities may be added in the future.\n\nFoodWatch is developed by
+Eric Jang. Feel free to give feedback or report bugs through the app's feedback form"
+        android:padding="10dp"
+        />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/colorGreyBackground"/>
+
+    <LinearLayout
+        android:id="@+id/about_license"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/license_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Open source licenses"
+            android:textSize="14sp"
+            android:textColor="@color/blackFont"/>
+
+        <TextView
+            android:id="@+id/license_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="License details for open source software"
+            android:textColor="@color/greyFont"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+</LinearLayout>
