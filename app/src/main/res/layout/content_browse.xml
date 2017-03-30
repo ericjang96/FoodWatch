@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.ejang.restaurantwatch.BrowseActivity"
-    tools:showIn="@layout/app_bar_browse"
+    tools:showIn="@layout/app_bar_main"
     android:orientation="vertical"
     android:background="@color/colorGreyBackground">
 
@@ -74,7 +74,7 @@
             android:id="@+id/search_options">
 
             <Button
-                android:id="@+id/advanced_search_button"
+                android:id="@+id/button_filter_search"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
@@ -94,7 +94,7 @@
                 android:background="@color/colorGreyBackground"/>
 
             <Button
-                android:id="@+id/sort_search_button"
+                android:id="@+id/button_sort_search"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"

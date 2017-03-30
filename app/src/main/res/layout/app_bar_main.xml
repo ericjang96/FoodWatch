@@ -21,6 +21,4 @@ tools:context="com.ejang.restaurantwatch.BrowseActivity">
 
 </android.support.design.widget.AppBarLayout>
 
-<include android:id="@+id/main_screen" layout="@layout/content_browse" />
-
 </android.support.design.widget.CoordinatorLayout>

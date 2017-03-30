@@ -4,7 +4,7 @@
     <color name="colorPrimaryDark">#1976D2</color>
     <color name="colorSecondary">#1565C0</color>
     <color name="colorAccent">#82B1FF</color>
-    <color name="colorGreyBackground">#EEEEEE</color>
+    <color name="colorDarkBlue">#0D47A1</color>
 
     <color name="colorHeader">#0f61cc</color>
     <color name="colorWhite">#ffffff</color>
@@ -15,4 +15,8 @@
     <color name="colorHighHazard">#D50000</color>
     <color name="colorModerateHazard">#FFAB00</color>
     <color name="colorLowHazard">#00C853</color>
+
+    <color name="colorGreyBackground">#EEEEEE</color>
+    <color name="colorGreyRippleLight">#E0E0E0</color>
+    <color name="colorGreyRippleDark">#BDBDBD</color>
 </resources>

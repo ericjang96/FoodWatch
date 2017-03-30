@@ -12,8 +12,10 @@
         android:layout_height="wrap_content"
         android:text="Thank you for using FoodWatch Beta. \n\nThis version uses restaurant and inspection data
 from the open data catalogue of City of Surrey. More cities may be added in the future.\n\nFoodWatch is developed by
-Eric Jang. Feel free to give feedback or report bugs through the app's feedback form"
-        android:padding="10dp"
+Eric Jang. Feel free to give feedback or report bugs through the app's feedback form."
+        android:padding="14dp"
+        android:textSize="16sp"
+        android:textColor="@color/blackFont"
         />
 
     <ImageView
@@ -25,15 +27,17 @@ Eric Jang. Feel free to give feedback or report bugs through the app's feedback 
         android:id="@+id/about_license"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:orientation="vertical">
+        android:padding="14dp"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:background="@drawable/grey_ripple_effect">
 
         <TextView
             android:id="@+id/license_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Open source licenses"
-            android:textSize="14sp"
+            android:textSize="16sp"
             android:textColor="@color/blackFont"/>
 
         <TextView
@@ -42,7 +46,8 @@ Eric Jang. Feel free to give feedback or report bugs through the app's feedback 
             android:layout_height="wrap_content"
             android:text="License details for open source software"
             android:textColor="@color/greyFont"
-            android:textSize="10sp" />
+            android:textSize="14sp"
+            android:layout_marginTop="2dp" />
     </LinearLayout>
 
 </LinearLayout>

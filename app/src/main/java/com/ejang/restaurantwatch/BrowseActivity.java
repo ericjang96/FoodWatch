@@ -1,6 +1,8 @@
 package com.ejang.restaurantwatch;
 
 import android.os.Bundle;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.SearchView;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -31,18 +33,7 @@ import java.util.HashMap;
 
 import android.content.Intent;
 
-// TODO: Add alert dialog UI for filter + implement it
-// TODO: Add alert dialog UI for sort + implement + make header reflect it
-// TODO: Consider using sharedpreferences for loading arrayadapter if it's faster than making request
-//       each time. Would only update on user command in this case
-// TODO: Add another activity for restaurant details when listview item is clicked
-// TODO: Add distance from user on listview item + arrow to make it look clickable
-// TODO: Consider uploading to GooglePlay at this point
-// TODO: Add notification to navigation bar and allow users to be emailed or sent notifs
-// TODO: Add favorite option to filter results. Users can favorite restaurants in the new activity
-
-public class BrowseActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+public class BrowseActivity extends BaseActivity {
 
     RestaurantListAdapter restaurantListAdapter;
     ListView restaurantList;
@@ -52,19 +43,29 @@ public class BrowseActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set frame content to the correct layout for this activity.
+        FrameLayout contentFrameLayout = (FrameLayout) findViewById(R.id.content_frame);
+        getLayoutInflater().inflate(R.layout.content_browse, contentFrameLayout);
+        // Set the current view on the base class and set it to checked.
+        super.setCurrentNavView(R.id.nav_restaurant);
+        navigationView.setCheckedItem(R.id.nav_restaurant);
 
-        setContentView(R.layout.activity_browse);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        // Add button click listeners.
+        Button filterButton = (Button) findViewById(R.id.button_filter_search);
+        filterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO: implement this with alert dialog
+            }
+        });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        Button searchButton = (Button) findViewById(R.id.button_sort_search);
+        filterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO: Implement this with alert dialog
+            }
+        });
 
         initializeAllRestaurants();
 
@@ -72,10 +73,14 @@ public class BrowseActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
+        // If drawer is open, back button closes it. If not, return to last content.
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
+        if (drawer.isDrawerOpen(GravityCompat.START))
+        {
             drawer.closeDrawer(GravityCompat.START);
-        } else {
+        }
+        else
+        {
             super.onBackPressed();
         }
     }
@@ -101,28 +106,6 @@ public class BrowseActivity extends AppCompatActivity
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_restaurant) {
-            // Handle the camera action
-
-        } else if (id == R.id.nav_about) {
-            Intent newAct = new Intent(this, AboutActivity.class);
-            startActivity(newAct);
-
-        } else if (id == R.id.nav_about) {
-
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
     }
 
     public void initializeAllRestaurants() {

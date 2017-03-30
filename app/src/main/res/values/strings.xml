@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">Restaurant Watch</string>
+    <string name="app_name">FoodWatch</string>
+    <string name="app_browse_title">Restaurants</string>
+    <string name="app_about_title">About</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
