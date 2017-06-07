@@ -6,19 +6,51 @@
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.ejang.restaurantwatch.BrowseActivity"
-    tools:showIn="@layout/app_bar_main"
     android:orientation="vertical"
     android:background="@color/colorGreyBackground">
 
-    <!--<SearchView-->
-        <!--android:id="@+id/restaurants_search"-->
-        <!--android:layout_width="match_parent"-->
+    <!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+        <!--android:orientation="horizontal" android:layout_width="match_parent"-->
+        <!--android:background="@color/colorGreyBackground"-->
         <!--android:layout_height="wrap_content"-->
-        <!--android:layout_alignParentStart="true"-->
-        <!--android:background="@color/colorWhite"-->
-        <!--android:layout_margin="8dp"-->
-        <!--android:elevation="2dp"-->
-        <!--/>-->
+        <!--android:id="@+id/search_options"-->
+        <!--android:layout_marginTop="74dp"-->
+        <!--&gt;-->
+
+        <!--<Button-->
+            <!--android:id="@+id/button_filter_search"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_alignParentStart="true"-->
+            <!--android:layout_below="@+id/restaurants_search"-->
+            <!--android:layout_weight="1"-->
+            <!--android:text="Filter"-->
+            <!--android:textAllCaps="false"-->
+            <!--android:textSize="16sp"-->
+            <!--android:textColor="@color/colorWhite"-->
+            <!--android:background="@drawable/button_ripple_effect"-->
+            <!--/>-->
+        <!--&lt;!&ndash;android:layout_marginLeft="8dp"&ndash;&gt;-->
+        <!--&lt;!&ndash;android:layout_marginRight="3dp"&ndash;&gt;-->
+        <!--<ImageView-->
+            <!--android:layout_width="1dp"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:background="@color/colorGreyBackground"/>-->
+
+        <!--<Button-->
+            <!--android:id="@+id/button_sort_search"-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="Order"-->
+            <!--android:textAllCaps="false"-->
+            <!--android:textSize="16sp"-->
+            <!--android:layout_below="@+id/restaurants_search"-->
+            <!--android:layout_alignParentEnd="true"-->
+            <!--android:textColor="@color/colorWhite"-->
+            <!--android:background="@drawable/button_ripple_effect"/>-->
+
+    <!--</LinearLayout>-->
 
     <TextView
         android:id="@+id/listview_caption"
@@ -30,7 +62,6 @@
         android:background="@drawable/browse_header"
         android:textColor="@color/colorWhite"
         android:text="Restaurants in Surrey, BC"
-        android:layout_alignParentStart="true"
         android:layout_marginTop="74dp"/>
 
     <LinearLayout
@@ -57,7 +88,8 @@
                 android:id="@+id/loadingPanel"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:gravity="center">
+                android:gravity="center"
+                android:visibility="gone">
 
                 <ProgressBar
                     android:layout_width="wrap_content"
@@ -66,47 +98,6 @@
             </RelativeLayout>
 
         </RelativeLayout>
-
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:orientation="horizontal" android:layout_width="match_parent"
-            android:background="@color/colorGreyBackground"
-            android:layout_height="wrap_content"
-            android:id="@+id/search_options">
-
-            <Button
-                android:id="@+id/button_filter_search"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_below="@+id/restaurants_search"
-                android:layout_weight="1"
-                android:text="Filter"
-                android:textAllCaps="false"
-                android:textSize="16sp"
-                android:textColor="@color/colorWhite"
-                android:background="@drawable/button_ripple_effect"
-                />
-            <!--android:layout_marginLeft="8dp"-->
-            <!--android:layout_marginRight="3dp"-->
-            <ImageView
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="@color/colorGreyBackground"/>
-
-            <Button
-                android:id="@+id/button_sort_search"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="Order"
-                android:textAllCaps="false"
-                android:textSize="16sp"
-                android:layout_below="@+id/restaurants_search"
-                android:layout_alignParentEnd="true"
-                android:textColor="@color/colorWhite"
-                android:background="@drawable/button_ripple_effect"/>
-
-        </LinearLayout>
 
     </LinearLayout>
 
@@ -121,6 +112,26 @@
         app:floatingSearch_suggestionsListAnimDuration="250"
         app:floatingSearch_showSearchKey="false"
         app:floatingSearch_leftActionMode="showSearch"
-        app:floatingSearch_close_search_on_keyboard_dismiss="true"/>
+        app:floatingSearch_close_search_on_keyboard_dismiss="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true" >
+
+    </com.arlib.floatingsearchview.FloatingSearchView>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="25dp"
+        android:layout_marginRight="25dp"
+        android:clickable="true"
+        android:scaleType="center"
+        android:src="@mipmap/ic_location_found"
+        android:backgroundTint="#FF6D00"
+        app:fabSize="normal"
+        app:elevation="6dp"
+        app:rippleColor="#FFD180"/>
 
 </RelativeLayout>

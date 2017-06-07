@@ -49,6 +49,7 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         TextView cleanliness = (TextView) rowView.findViewById(R.id.hazard_level);
         TextView numInspections = (TextView) rowView.findViewById(R.id.num_inspections);
         TextView lastInspectionDate = (TextView) rowView.findViewById(R.id.last_inspection_date);
+        TextView distanceFromUser = (TextView) rowView.findViewById(R.id.distance_from_location);
 
         Restaurant item = getItem(position);
 
@@ -84,6 +85,8 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
             numInspections.setText(context.getString(R.string.num_inspections, "Not available"));
             lastInspectionDate.setText(context.getString(R.string.last_inspection_date, "Not available"));
         }
+
+        distanceFromUser.setText(String.format(java.util.Locale.US,"%.1f", item.distanceFromUser / 1000) + " km");
 
         return rowView;
 

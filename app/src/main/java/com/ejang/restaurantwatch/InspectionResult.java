@@ -14,7 +14,7 @@ public class InspectionResult {
 
     public Date inspectionDate;
     public String inspectionType;
-    public ArrayList<String> violations;
+    public ArrayList<Violation> violations;
     public String hazardRating;
     public String numCritical;
     public String numNonCritical;
@@ -34,6 +34,25 @@ public class InspectionResult {
         this.hazardRating = hazardRating;
         this.numCritical = numCritical;
         this.numNonCritical = numNonCritical;
+        this.violations = new ArrayList<>();
+
+        if (violationsLump.length() > 0)
+        {
+
+        }
+    }
+
+    public void organizeViolationsLump(String violationsLump)
+    {
+        String[] violations = violationsLump.split("|");
+        for (String violation : violations)
+        {
+            String[] details = violation.split(",");
+            String code = details[0];
+            String crit = details[1];
+            String description = details[2];
+            this.violations.add(new Violation(code, crit, description));
+        }
     }
 
 }

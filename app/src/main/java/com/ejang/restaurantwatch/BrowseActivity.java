@@ -1,6 +1,13 @@
 package com.ejang.restaurantwatch;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.SearchView;
@@ -23,15 +30,21 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.arlib.floatingsearchview.FloatingSearchView;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import android.content.Intent;
+import android.widget.Toast;
 
 public class BrowseActivity extends BaseActivity {
 
@@ -39,6 +52,8 @@ public class BrowseActivity extends BaseActivity {
     ListView restaurantList;
     HashMap<String, ArrayList<InspectionResult>> inspectionData;
     ArrayList<Restaurant> allRestaurants;
+    static Double userLat;
+    static Double userLong;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,25 +65,60 @@ public class BrowseActivity extends BaseActivity {
         super.setCurrentNavView(R.id.nav_restaurant);
         navigationView.setCheckedItem(R.id.nav_restaurant);
 
-        // Add button click listeners.
-        Button filterButton = (Button) findViewById(R.id.button_filter_search);
-        filterButton.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton locationFab = (FloatingActionButton) findViewById(R.id.fab_location);
+        locationFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: implement this with alert dialog
+                int PLACE_PICKER_REQUEST = 1;
+                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+
+                try {
+                    startActivityForResult(builder.build(BrowseActivity.this), PLACE_PICKER_REQUEST);
+                }
+                catch (Exception e)
+                {
+                    return;
+                }
             }
         });
 
-        Button searchButton = (Button) findViewById(R.id.button_sort_search);
-        filterButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO: Implement this with alert dialog
-            }
-        });
+//        // Add button click listeners.
+//        Button filterButton = (Button) findViewById(R.id.button_filter_search);
+//        filterButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                // TODO: implement this with alert dialog
+//            }
+//        });
+//
+//        Button searchButton = (Button) findViewById(R.id.button_sort_search);
+//        filterButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                // TODO: Implement this with alert dialog
+//            }
+//        });
 
-        initializeAllRestaurants();
-
+//        // check if GPS enabled
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            // TODO: Consider calling
+//            //    ActivityCompat#requestPermissions
+//            // here to request the missing permissions, and then overriding
+//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//            //                                          int[] grantResults)
+//            // to handle the case where the user grants the permission. See the documentation
+//            // for ActivityCompat#requestPermissions for more details.
+//
+//            ActivityCompat.requestPermissions(this,
+//                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+//                    1);
+//            System.err.println("you don't got permissions boi");
+//        }
+//        else
+//        {
+//            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+//            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//        }
     }
 
     @Override
@@ -176,6 +226,12 @@ public class BrowseActivity extends BaseActivity {
                                 }
                             }
                             System.err.println("Finished second loop at: " + System.currentTimeMillis());
+                            Collections.sort(allRestaurants, new Comparator<Restaurant>() {
+                                @Override
+                                public int compare(Restaurant o1, Restaurant o2) {
+                                    return o1.distanceFromUser.compareTo(o2.distanceFromUser);
+                                }
+                            });
                             restaurantListAdapter = new RestaurantListAdapter(BrowseActivity.this, allRestaurants);
                             restaurantList = (ListView) findViewById(R.id.restaurant_listview);
                             restaurantList.setAdapter(restaurantListAdapter);
@@ -225,4 +281,15 @@ public class BrowseActivity extends BaseActivity {
         });
     }
 
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlacePicker.getPlace(data, this);
+                LatLng latlng = place.getLatLng();
+                userLat = latlng.latitude;
+                userLong = latlng.longitude;
+                initializeAllRestaurants();
+            }
+        }
+    }
 }

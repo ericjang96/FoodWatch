@@ -6,11 +6,15 @@
     android:layout_height="wrap_content"
     android:layout_alignParentTop="true"
     android:background="@drawable/list_item_shadow"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:clickable="false"
+    android:descendantFocusability="blocksDescendants"
+    android:focusable="false"
+    android:focusableInTouchMode="false">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/restaurant_info"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:background="@color/colorWhite"
@@ -19,11 +23,7 @@
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="10dp"
-        android:elevation="10dp"
-        android:clickable="false"
-        android:descendantFocusability="blocksDescendants"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
+        android:layout_weight="1"
         >
 
         <TextView
@@ -95,6 +95,17 @@
 
     </LinearLayout>
 
-    <!--This is where the distance and arrow button should go-->
+    <TextView
+        android:layout_alignParentTop="true"
+        android:background="@color/colorWhite"
+        android:layout_weight="0"
+        android:id="@+id/distance_from_location"
+        android:layout_width="70sp"
+        android:layout_height="match_parent"
+        android:text="distance"
+        android:textColor="@color/greyFont"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:paddingRight="16sp"/>
 
 </LinearLayout>
