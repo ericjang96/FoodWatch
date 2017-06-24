@@ -1,29 +1,16 @@
 package com.ejang.restaurantwatch;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationManager;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.support.v7.app.AlertDialog;
 import android.widget.AbsListView;
-import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.SearchView;
 import android.view.View;
-import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.android.volley.Request;
@@ -49,7 +36,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.content.Intent;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class BrowseActivity extends BaseActivity {
 
@@ -165,6 +151,11 @@ public class BrowseActivity extends BaseActivity {
         if (id == R.id.action_refresh) {
             initializeAllRestaurants();
             return true;
+        }
+
+        if (id == R.id.action_filter_search)
+        {
+            showFilterDialog();
         }
 
         return super.onOptionsItemSelected(item);
@@ -306,7 +297,7 @@ public class BrowseActivity extends BaseActivity {
             @Override
             public void onSearchTextChanged(String oldQuery, final String newQuery)
             {
-                BrowseActivity.this.restaurantListAdapter.getFilter().filter(newQuery);
+                BrowseActivity.this.restaurantListAdapter.getFilter().setFilterType(FilterType.TEXT_SEARCH).filter(newQuery);
             }
         });
     }
@@ -346,5 +337,75 @@ public class BrowseActivity extends BaseActivity {
             // Make adapter available again
             adapterAvailable.set(true);
         }
+    }
+
+    // Helper for bringing up the multiple-choice filter dialog when "Filter Search" action is clicked.
+    protected void showFilterDialog()
+    {
+        // Build an AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        // String array for alert dialog multi choice items
+        String[] safetyRatings = new String[]{
+                "Safe Restaurants",
+                "Moderately Safe Restaurants"
+        };
+
+        // Boolean array for initial selected items
+        final boolean[] checkedSafetyRatings = new boolean[]{
+                false, // Safe
+                false, // Moderate
+
+        };
+
+        // Set multiple choice items for alert dialog
+        builder.setMultiChoiceItems(safetyRatings, checkedSafetyRatings, new DialogInterface.OnMultiChoiceClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+
+                // Update the current focused item's checked status
+                checkedSafetyRatings[which] = isChecked;
+            }
+        });
+
+        // Specify the dialog is cancelable
+        builder.setCancelable(true);
+
+        // Set a title for alert dialog
+        builder.setTitle("Filter Results");
+
+        // Set the positive/yes button click listener
+        builder.setPositiveButton("Filter", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Do something when click positive button
+                String query = "";
+                if (checkedSafetyRatings[0])
+                {
+                    query = query + "safe";
+                }
+                if (checkedSafetyRatings[1])
+                {
+                    query = query + "moderate";
+                }
+                if (query != "")
+                {
+                    BrowseActivity.this.restaurantListAdapter.getFilter().setFilterType(FilterType.SAFETY_RATING).filter(query);
+                }
+            }
+        });
+
+
+        // Set the neutral/cancel button click listener
+        builder.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Do something when click the neutral button
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        // Display the alert dialog on interface
+        dialog.show();
     }
 }

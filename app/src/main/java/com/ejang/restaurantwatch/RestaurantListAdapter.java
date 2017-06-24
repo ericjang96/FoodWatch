@@ -63,10 +63,10 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
 
         ArrayList<InspectionResult> results = item.inspectionResults;
         if (results != null) {
-            if (results.get(0).hazardRating.equalsIgnoreCase("high")) {
+            if (results.get(0).hazardRating == HazardRating.UNSAFE) {
                 cleanliness.setText(context.getString(R.string.high_hazard));
                 cleanliness.setTextColor(context.getColor(R.color.colorHighHazard));
-            } else if (results.get(0).hazardRating.equalsIgnoreCase("low")) {
+            } else if (results.get(0).hazardRating == HazardRating.SAFE) {
                 cleanliness.setText(context.getString(R.string.low_hazard));
                 cleanliness.setTextColor(context.getColor(R.color.colorLowHazard));
             } else {
@@ -94,58 +94,14 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
     }
 
     @Override
-    public Filter getFilter() {
-
-        return new Filter() {
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-
-                FilterResults results = new FilterResults();
-                System.err.println("tryna filter dawg");
-                if (constraint == null || constraint.length() == 0) {
-                    // No filter implemented we return all the list
-                    results.values = originalRestaurants;
-                    results.count = originalRestaurants.size();
-                } else {
-                    ArrayList<Restaurant> filteredRestaurants = new ArrayList<>();
-
-                    for (Restaurant restaurant : originalRestaurants) {
-                        System.err.println("constraint: " + constraint.toString());
-                        System.err.println("restaurant name: " + restaurant.name);
-                        if (restaurant.name.toLowerCase().contains(constraint.toString().toLowerCase())) {
-                            System.err.println("satisfied condition");
-                            filteredRestaurants.add(restaurant);
-                        }
-                    }
-                    results.values = filteredRestaurants;
-                    results.count = filteredRestaurants.size();
-                }
-                System.err.println("finished filter dawg");
-                return results;
-            }
-
-            @Override
-            protected void publishResults(CharSequence constraint, FilterResults results) {
-                // Now we have to inform the adapter about the new list filtered
-
-                if (results.count == 0) {
-                    allRestaurants.clear();
-                    notifyDataSetChanged();
-                }
-                else {
-                    allRestaurants.clear();
-                    allRestaurants.addAll((ArrayList<Restaurant>) results.values);
-                    notifyDataSetChanged();
-                }
-            }
-        };
-
+    public RestaurantFilter getFilter() {
+        return new RestaurantFilter();
     }
 
     public void updateDistancesFromUser()
     {
         System.err.println("INSIDE UPDATE DISTANCES");
-        // Iterate through all Restaurants and update their distances from user location
+        // Iterate through all Restaurants and update their distances from user's chosen location
         originalRestaurants.clear();
         System.err.println("THIS COUNT IS: " + this.getCount());
         for (int i=0 ; i < this.getCount() ; i++)
@@ -160,6 +116,83 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         });
         originalRestaurants.addAll(allRestaurants);
         this.notifyDataSetChanged();
+    }
+
+    // Inner class defined to support different types of filtering.
+    protected class RestaurantFilter extends Filter
+    {
+        protected FilterType filterType;
+
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+
+            FilterResults results = new FilterResults();
+            System.err.println("tryna filter dawg");
+            if (constraint == null || constraint.length() == 0)
+            {
+                // No constraint given, so nothing to change in the original array.
+                results.values = originalRestaurants;
+                results.count = originalRestaurants.size();
+            }
+            else
+            {
+                ArrayList<Restaurant> filteredRestaurants = new ArrayList<>();
+
+                for (Restaurant restaurant : originalRestaurants) {
+                    System.err.println("constraint: " + constraint.toString());
+                    System.err.println("restaurant name: " + restaurant.name);
+                    // Filter by matching text in the search box to the restaurant's name.
+                    if (filterType == FilterType.TEXT_SEARCH)
+                    {
+                        if (restaurant.name.toLowerCase().contains(constraint.toString().toLowerCase())) {
+                            System.err.println("satisfied condition");
+                            filteredRestaurants.add(restaurant);
+                        }
+                    }
+                    // Filter depending on the safety ratings chosen by the user.
+                    else if (filterType == FilterType.SAFETY_RATING)
+                    {
+                        // If the restaurant doesn't have any inspection data, skip it.
+                        if (restaurant.inspectionResults == null)
+                        {
+                            continue;
+                        }
+                        if (constraint.toString().contains("safe") && restaurant.inspectionResults.get(0).hazardRating == HazardRating.SAFE)
+                        {
+                            filteredRestaurants.add(restaurant);
+                        }
+                        else if (constraint.toString().contains("moderate") && restaurant.inspectionResults.get(0).hazardRating == HazardRating.MODERATE)
+                        {
+                            filteredRestaurants.add(restaurant);
+                        }
+                    }
+                }
+                results.values = filteredRestaurants;
+                results.count = filteredRestaurants.size();
+            }
+            System.err.println("finished filter dawg");
+            return results;
+        }
+
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            // Now we have to inform the adapter about the new list filtered
+            if (results.count == 0) {
+                allRestaurants.clear();
+                notifyDataSetChanged();
+            }
+            else {
+                allRestaurants.clear();
+                allRestaurants.addAll((ArrayList<Restaurant>) results.values);
+                notifyDataSetChanged();
+            }
+        }
+
+        public Filter setFilterType(FilterType filterType)
+        {
+            this.filterType = filterType;
+            return this;
+        }
     }
 }
 

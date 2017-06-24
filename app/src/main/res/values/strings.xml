@@ -7,6 +7,7 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_refresh">Refresh</string>
+    <string name="action_filter_search">Filter Search</string>
 
     <string name="url_all_inspections">http://data.surrey.ca/api/action/datastore_search?resource_id=30b38b66-649f-4507-a632-d5f6f5fe87f1&amp;limit=50000</string>
 

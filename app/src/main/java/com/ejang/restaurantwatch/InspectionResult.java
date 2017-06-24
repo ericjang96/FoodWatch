@@ -15,7 +15,7 @@ public class InspectionResult {
     public Date inspectionDate;
     public String inspectionType;
     public ArrayList<Violation> violations;
-    public String hazardRating;
+    public HazardRating hazardRating;
     public String numCritical;
     public String numNonCritical;
 
@@ -31,14 +31,26 @@ public class InspectionResult {
         }
 
         inspectionType = type;
-        this.hazardRating = hazardRating;
         this.numCritical = numCritical;
         this.numNonCritical = numNonCritical;
         this.violations = new ArrayList<>();
 
         if (violationsLump.length() > 0)
         {
+            // TODO: call organizeViolationsLump when it is implemented
+        }
 
+        if (hazardRating.equalsIgnoreCase("low"))
+        {
+            this.hazardRating = HazardRating.SAFE;
+        }
+        else if (hazardRating.equalsIgnoreCase("moderate"))
+        {
+            this.hazardRating = HazardRating.MODERATE;
+        }
+        else if (hazardRating.equalsIgnoreCase("high"))
+        {
+            this.hazardRating = HazardRating.UNSAFE;
         }
     }
 

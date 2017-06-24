@@ -9,8 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-// TODO: Add alert dialog UI for filter + implement it
-// TODO: Add alert dialog UI for sort + implement + make header reflect it
+// TODO: Add setting on search bar for filter options (e.g. "show only safe restaurants")
 // TODO: Consider using sharedpreferences for loading arrayadapter if it's faster than making request
 //       each time. Would only update on user command in this case
 // TODO: Add another activity for restaurant details when listview item is clicked
