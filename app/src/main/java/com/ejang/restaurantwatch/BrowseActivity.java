@@ -8,6 +8,9 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.SearchView;
@@ -42,8 +45,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.content.Intent;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class BrowseActivity extends BaseActivity {
@@ -54,10 +59,15 @@ public class BrowseActivity extends BaseActivity {
     ArrayList<Restaurant> allRestaurants;
     static Double userLat;
     static Double userLong;
+    static volatile AtomicBoolean locationSet;
+    static volatile AtomicBoolean adapterAvailable;
+    FloatingActionButton locationFab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        locationSet = new AtomicBoolean(false);
+        adapterAvailable = new AtomicBoolean(false);
         // Set frame content to the correct layout for this activity.
         FrameLayout contentFrameLayout = (FrameLayout) findViewById(R.id.content_frame);
         getLayoutInflater().inflate(R.layout.content_browse, contentFrameLayout);
@@ -65,7 +75,7 @@ public class BrowseActivity extends BaseActivity {
         super.setCurrentNavView(R.id.nav_restaurant);
         navigationView.setCheckedItem(R.id.nav_restaurant);
 
-        FloatingActionButton locationFab = (FloatingActionButton) findViewById(R.id.fab_location);
+        locationFab = (FloatingActionButton) findViewById(R.id.fab_location);
         locationFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -81,6 +91,8 @@ public class BrowseActivity extends BaseActivity {
                 }
             }
         });
+
+        initializeAllRestaurants();
 
 //        // Add button click listeners.
 //        Button filterButton = (Button) findViewById(R.id.button_filter_search);
@@ -159,6 +171,8 @@ public class BrowseActivity extends BaseActivity {
     }
 
     public void initializeAllRestaurants() {
+        // Initialization of the adapter begins, so prevent it from being modified in other threads.
+        adapterAvailable.set(false);
         // Reset restaurant data and fetch all info from API
         inspectionData = new HashMap<>();
         allRestaurants = new ArrayList<>();
@@ -166,7 +180,10 @@ public class BrowseActivity extends BaseActivity {
         restaurantList = null;
 
         // Make loading icon visible
-        findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
+        if (locationSet.get())
+        {
+            findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
+        }
 
         // Set up a request to get all inspection data. When response is returned, it starts
         // an async task to organize this data.
@@ -235,16 +252,29 @@ public class BrowseActivity extends BaseActivity {
                             restaurantListAdapter = new RestaurantListAdapter(BrowseActivity.this, allRestaurants);
                             restaurantList = (ListView) findViewById(R.id.restaurant_listview);
                             restaurantList.setAdapter(restaurantListAdapter);
-                            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-                            System.err.println("Set adapter at: " + System.currentTimeMillis());
-                            restaurantList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                            restaurantList.setOnScrollListener(new AbsListView.OnScrollListener() {
                                 @Override
-                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                    // TODO: navigate to different page with restaurant details on click
+                                public void onScrollStateChanged(AbsListView view, int scrollState) {
+                                    if (scrollState == SCROLL_STATE_FLING) {
+                                        locationFab.hide();
+                                    }
+                                    else
+                                    {
+                                        locationFab.show();
+                                    }
+                                }
+
+                                @Override
+                                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
                                 }
                             });
+                            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+                            System.err.println("Set adapter at: " + System.currentTimeMillis());
 
                             initializeSearchBar();
+                            // This is the last step of adapter initialization, so make it available again.
+                            adapterAvailable.set(true);
 
                         } catch (JSONException e) {
                             System.err.println("CAUGHT AN EXCEPTION: ");
@@ -281,15 +311,40 @@ public class BrowseActivity extends BaseActivity {
         });
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
         if (requestCode == 1) {
             if (resultCode == RESULT_OK) {
                 Place place = PlacePicker.getPlace(data, this);
                 LatLng latlng = place.getLatLng();
                 userLat = latlng.latitude;
                 userLong = latlng.longitude;
-                initializeAllRestaurants();
+                locationSet.set(true);
+
+                findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
+                TextView location = (TextView) findViewById(R.id.listview_caption);
+                location.setText("Restaurants Near " + place.getAddress());
+
+                reorderResults();
             }
+        }
+    }
+
+    // If the restaurantListAdapter isn't being initialized, it is updated and the listview is reordered
+    // according to the new distances from user location.
+    protected void reorderResults()
+    {
+        findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
+        if (restaurantListAdapter != null && adapterAvailable.get())
+        {
+            // Modifying the adapter, so make it unavailable to other threads.
+            adapterAvailable.set(false);
+            restaurantListAdapter.updateDistancesFromUser();
+            // Makes the listview scroll to top after updating
+            restaurantList.setSelectionAfterHeaderView();
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+            // Make adapter available again
+            adapterAvailable.set(true);
         }
     }
 }

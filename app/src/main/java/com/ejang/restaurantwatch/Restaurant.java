@@ -24,7 +24,11 @@ public class Restaurant {
         this.longitude = Double.valueOf(longitude);
         this.trackingID = trackingID;
         this.inspectionResults = inspections;
+        updateDistanceFromUser();
+    }
 
+    public void updateDistanceFromUser()
+    {
         float[] results = {0,0,0};
         android.location.Location.distanceBetween(this.latitude, this.longitude, BrowseActivity.userLat, BrowseActivity.userLong, results);
         this.distanceFromUser = Float.valueOf(results[0]);

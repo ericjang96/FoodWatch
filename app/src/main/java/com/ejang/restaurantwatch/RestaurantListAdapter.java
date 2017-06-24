@@ -13,6 +13,7 @@ import android.widget.TextView;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * Created by Eric on 2017-03-22.
@@ -139,6 +140,26 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
             }
         };
 
+    }
+
+    public void updateDistancesFromUser()
+    {
+        System.err.println("INSIDE UPDATE DISTANCES");
+        // Iterate through all Restaurants and update their distances from user location
+        originalRestaurants.clear();
+        System.err.println("THIS COUNT IS: " + this.getCount());
+        for (int i=0 ; i < this.getCount() ; i++)
+        {
+            this.getItem(i).updateDistanceFromUser();
+        }
+        this.sort(new Comparator<Restaurant>() {
+            @Override
+            public int compare(Restaurant o1, Restaurant o2) {
+                return o1.distanceFromUser.compareTo(o2.distanceFromUser);
+            }
+        });
+        originalRestaurants.addAll(allRestaurants);
+        this.notifyDataSetChanged();
     }
 }
 

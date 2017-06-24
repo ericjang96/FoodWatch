@@ -56,12 +56,17 @@
         android:id="@+id/listview_caption"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="5dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="40dp"
+        android:paddingRight="40dp"
         android:textSize="16sp"
         android:background="@drawable/browse_header"
         android:textColor="@color/colorWhite"
         android:text="Restaurants in Surrey, BC"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:gravity="center"
         android:layout_marginTop="74dp"/>
 
     <LinearLayout
@@ -78,9 +83,10 @@
             android:background="@color/colorWhite"
             android:layout_weight="1">
 
-            <ListView android:id="@+id/restaurant_listview"
-                android:layout_height="match_parent"
+            <ListView
+                android:id="@+id/restaurant_listview"
                 android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:divider="@color/colorGreyBackground"
                 android:dividerHeight="3.0sp" />
 
@@ -89,12 +95,27 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:visibility="gone">
+                android:visibility="invisible">
 
                 <ProgressBar
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:indeterminate="true" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/no_location_selected_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/no_location_selected_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="18sp"
+                    android:text="No Location Selected"/>
             </RelativeLayout>
 
         </RelativeLayout>
@@ -122,16 +143,16 @@
         android:id="@+id/fab_location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="25dp"
-        android:layout_marginRight="25dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginRight="16dp"
+        android:backgroundTint="#FF6D00"
         android:clickable="true"
         android:scaleType="center"
         android:src="@mipmap/ic_location_found"
-        android:backgroundTint="#FF6D00"
-        app:fabSize="normal"
         app:elevation="6dp"
-        app:rippleColor="#FFD180"/>
+        app:fabSize="normal"
+        app:rippleColor="#FFD180" />
 
 </RelativeLayout>
