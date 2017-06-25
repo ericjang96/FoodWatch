@@ -207,6 +207,14 @@ public class BrowseActivity extends BaseActivity {
         String url = getString(R.string.url_all_restaurants);
         RequestQueue queue = Volley.newRequestQueue(this);
 
+        // This method is only called when a location is set, so make the "no location selected" text
+        // invisible. Also make the loading panel visible if it isn't at this point.
+        findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
+        if (findViewById(R.id.no_location_selected_text).getVisibility() != View.VISIBLE)
+        {
+            findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
+        }
+
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
                     @Override
