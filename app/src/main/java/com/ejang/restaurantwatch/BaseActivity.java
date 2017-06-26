@@ -9,8 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-// TODO: Add setting on search bar for filter options (e.g. "show only safe restaurants")
-// TODO: Consider using sharedpreferences for loading arrayadapter if it's faster than making request
+// TODO: Implement SQLite DB so we only make HTTP requests when explicitly asked by user
 //       each time. Would only update on user command in this case
 // TODO: Add another activity for restaurant details when listview item is clicked
 // TODO: Add distance from user on listview item + arrow to make it look clickable
