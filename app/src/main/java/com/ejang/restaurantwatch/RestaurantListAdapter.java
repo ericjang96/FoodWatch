@@ -13,6 +13,7 @@ import android.widget.TextView;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 
 /**
@@ -22,16 +23,22 @@ import java.util.Comparator;
 public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
 
     private BrowseActivity context;
-    private ArrayList<Restaurant> allRestaurants;
-    private ArrayList<Restaurant> originalRestaurants;
+    
+    // This list is what is actually displayed on the ListView. The superclass holds a reference
+    // to this list.
+    private ArrayList<Restaurant> restaurantsInList;
+
+    // This list should NEVER change in size from the moment it is initialized. It will be sorted
+    // throughout its lifetime, but no elements should be added or removed.
+    private ArrayList<Restaurant> allOriginalRestaurants;
 
     // Custom ArrayAdapter that handles TrafficEvent objects.
-    public RestaurantListAdapter(BrowseActivity context, ArrayList<Restaurant> allRestaurants) {
+    public RestaurantListAdapter(BrowseActivity context, ArrayList<Restaurant> restaurants) {
 
-        super(context, R.layout.list_item_restaurant, allRestaurants);
+        super(context, R.layout.list_item_restaurant, restaurants);
         this.context = context;
-        this.allRestaurants = allRestaurants;
-        originalRestaurants = new ArrayList<>(allRestaurants);
+        this.restaurantsInList = restaurants;
+        allOriginalRestaurants = new ArrayList<>(restaurantsInList);
     }
 
     @Override
@@ -98,23 +105,26 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         return new RestaurantFilter();
     }
 
+    // This method is called when a new location has been set. When a new location is set, all previous
+    // search filters are cleared, so we clear the ListView restaurants and populate it with all of
+    // the restaurants ordered by distance from the newly set location.
     public void updateDistancesFromUser()
     {
         System.err.println("INSIDE UPDATE DISTANCES");
         // Iterate through all Restaurants and update their distances from user's chosen location
-        originalRestaurants.clear();
         System.err.println("THIS COUNT IS: " + this.getCount());
-        for (int i=0 ; i < this.getCount() ; i++)
+        for (int i=0 ; i < allOriginalRestaurants.size() ; i++)
         {
-            this.getItem(i).updateDistanceFromUser();
+            allOriginalRestaurants.get(i).updateDistanceFromUser();
         }
-        this.sort(new Comparator<Restaurant>() {
+        Collections.sort(allOriginalRestaurants, new Comparator<Restaurant>() {
             @Override
             public int compare(Restaurant o1, Restaurant o2) {
                 return o1.distanceFromUser.compareTo(o2.distanceFromUser);
             }
         });
-        originalRestaurants.addAll(allRestaurants);
+        restaurantsInList.clear();
+        restaurantsInList.addAll(allOriginalRestaurants);
         this.notifyDataSetChanged();
     }
 
@@ -131,14 +141,14 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
             if (constraint == null || constraint.length() == 0)
             {
                 // No constraint given, so nothing to change in the original array.
-                results.values = originalRestaurants;
-                results.count = originalRestaurants.size();
+                results.values = allOriginalRestaurants;
+                results.count = allOriginalRestaurants.size();
             }
             else
             {
                 ArrayList<Restaurant> filteredRestaurants = new ArrayList<>();
 
-                for (Restaurant restaurant : originalRestaurants) {
+                for (Restaurant restaurant : allOriginalRestaurants) {
                     System.err.println("constraint: " + constraint.toString());
                     System.err.println("restaurant name: " + restaurant.name);
                     // Filter by matching text in the search box to the restaurant's name.
@@ -178,12 +188,12 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         protected void publishResults(CharSequence constraint, FilterResults results) {
             // Now we have to inform the adapter about the new list filtered
             if (results.count == 0) {
-                allRestaurants.clear();
+                restaurantsInList.clear();
                 notifyDataSetChanged();
             }
             else {
-                allRestaurants.clear();
-                allRestaurants.addAll((ArrayList<Restaurant>) results.values);
+                restaurantsInList.clear();
+                restaurantsInList.addAll((ArrayList<Restaurant>) results.values);
                 notifyDataSetChanged();
             }
         }

@@ -52,6 +52,8 @@ public class BrowseActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // TODO: instead of initializing this to false every time, make a sharedPreference entry for lat and long. If
+        //       those fields exist, then locationSet will be true.
         locationSet = new AtomicBoolean(false);
         adapterAvailable = new AtomicBoolean(false);
         // Set frame content to the correct layout for this activity.
@@ -77,6 +79,13 @@ public class BrowseActivity extends BaseActivity {
                 }
             }
         });
+
+        // This will always be true at the moment, but that won't be the case later on. locationSet won't
+        // always be initialized to false inside onCreate. Instead, we will check for the value in sharedPreferences
+        if (!locationSet.get())
+        {
+            findViewById(R.id.no_location_selected_layout).setVisibility(View.VISIBLE);
+        }
 
         initializeAllRestaurants();
 
@@ -209,8 +218,8 @@ public class BrowseActivity extends BaseActivity {
 
         // This method is only called when a location is set, so make the "no location selected" text
         // invisible. Also make the loading panel visible if it isn't at this point.
-        findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
-        if (findViewById(R.id.no_location_selected_text).getVisibility() != View.VISIBLE)
+        findViewById(R.id.no_location_selected_layout).setVisibility(View.GONE);
+        if (findViewById(R.id.no_location_selected_layout).getVisibility() != View.VISIBLE)
         {
             findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         }
@@ -314,13 +323,14 @@ public class BrowseActivity extends BaseActivity {
     {
         if (requestCode == 1) {
             if (resultCode == RESULT_OK) {
+                findViewById(R.id.no_location_selected_layout).setVisibility(View.GONE);
+                findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
                 Place place = PlacePicker.getPlace(data, this);
                 LatLng latlng = place.getLatLng();
                 userLat = latlng.latitude;
                 userLong = latlng.longitude;
                 locationSet.set(true);
 
-                findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
                 TextView location = (TextView) findViewById(R.id.listview_caption);
                 location.setText("Restaurants Near " + place.getAddress());
 
@@ -333,7 +343,6 @@ public class BrowseActivity extends BaseActivity {
     // according to the new distances from user location.
     protected void reorderResults()
     {
-        findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         if (restaurantListAdapter != null && adapterAvailable.get())
         {
             // Modifying the adapter, so make it unavailable to other threads.
