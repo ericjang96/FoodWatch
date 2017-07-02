@@ -1,4 +1,6 @@
-package com.ejang.restaurantwatch;
+package com.ejang.restaurantwatch.Utils;
+
+import com.ejang.restaurantwatch.Activities.BrowseActivity;
 
 import java.util.ArrayList;
 
@@ -16,12 +18,12 @@ public class Restaurant {
     public ArrayList<InspectionResult> inspectionResults;
     public Float distanceFromUser;
 
-    public Restaurant(String name, String address, String latitude, String longitude, String trackingID, ArrayList<InspectionResult> inspections)
+    public Restaurant(String name, String address, Double latitude, Double longitude, String trackingID, ArrayList<InspectionResult> inspections)
     {
         this.name = name;
         this.address = address;
-        this.latitude = Double.valueOf(latitude);
-        this.longitude = Double.valueOf(longitude);
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.trackingID = trackingID;
         this.inspectionResults = inspections;
         updateDistanceFromUser();

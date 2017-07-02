@@ -1,14 +1,13 @@
-package com.ejang.restaurantwatch;
+package com.ejang.restaurantwatch.Activities;
 
 import android.os.Bundle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.TextView;
+
+import com.ejang.restaurantwatch.R;
 
 public class AboutActivity extends BaseActivity {
 

@@ -1,4 +1,4 @@
-package com.ejang.restaurantwatch;
+package com.ejang.restaurantwatch.Activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +8,9 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+
+import com.ejang.restaurantwatch.R;
+import com.ejang.restaurantwatch.SQLDB.DatabaseContract.DatabaseHelper;
 
 // TODO: Implement SQLite DB so we only make HTTP requests when explicitly asked by user
 //       each time. Would only update on user command in this case
@@ -25,6 +28,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
     Toolbar toolbar;
     Integer currentView;
     NavigationView navigationView;
+    DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +44,8 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
         drawerLayout.addDrawerListener(actionBarDrawerToggle);
 
         navigationView.setNavigationItemSelectedListener(this);
+        // Set the database helper which will be used to access the DB
+        dbHelper = new DatabaseHelper(this);
     }
 
     @Override
@@ -73,6 +79,15 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
                 break;
         }
         return false;
+    }
+
+    // Opening and closing database is expensive, so keep it open and close it when the activity
+    // is destroyed.
+    @Override
+    protected void onDestroy()
+    {
+        dbHelper.close();
+        super.onDestroy();
     }
 
     public void setCurrentNavView(Integer layout)

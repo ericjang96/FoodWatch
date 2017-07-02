@@ -1,4 +1,4 @@
-package com.ejang.restaurantwatch;
+package com.ejang.restaurantwatch.Utils;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -13,15 +13,22 @@ import java.util.Date;
 public class InspectionResult {
 
     public Date inspectionDate;
+    public String inspectionDateString;
     public String inspectionType;
+    public String violLump;
     public ArrayList<Violation> violations;
     public HazardRating hazardRating;
-    public String numCritical;
-    public String numNonCritical;
+    public Integer numCritical;
+    public Integer numNonCritical;
+    public String hazardRatingString;
+    public String trackingID;
 
-    public InspectionResult(String date, String type, String violationsLump, String hazardRating,
-                            String numCritical, String numNonCritical)
+    public InspectionResult(String trackingID, String date, String type, String violationsLump, String hazardRating,
+                            Integer numCritical, Integer numNonCritical)
     {
+        this.trackingID = trackingID;
+        this.inspectionDateString = date;
+
         DateFormat format = new SimpleDateFormat("yyyyMMdd");
         try {
             inspectionDate = format.parse(date);
@@ -33,7 +40,9 @@ public class InspectionResult {
         inspectionType = type;
         this.numCritical = numCritical;
         this.numNonCritical = numNonCritical;
+        this.violLump = violationsLump;
         this.violations = new ArrayList<>();
+        this.hazardRatingString = hazardRating;
 
         if (violationsLump.length() > 0)
         {
@@ -51,6 +60,10 @@ public class InspectionResult {
         else if (hazardRating.equalsIgnoreCase("high"))
         {
             this.hazardRating = HazardRating.UNSAFE;
+        }
+        else
+        {
+            this.hazardRating = HazardRating.UNKNOWN;
         }
     }
 

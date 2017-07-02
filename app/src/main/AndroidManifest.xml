@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".BrowseActivity"
+            android:name=".Activities.BrowseActivity"
             android:label="@string/app_browse_title"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -24,7 +24,7 @@
         </activity>
 
         <activity
-            android:name=".AboutActivity"
+            android:name=".Activities.AboutActivity"
             android:label="@string/app_about_title">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />

@@ -1,6 +1,8 @@
-package com.ejang.restaurantwatch;
+package com.ejang.restaurantwatch.Activities;
 
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -20,17 +22,21 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.arlib.floatingsearchview.FloatingSearchView;
+import com.ejang.restaurantwatch.AsyncTasks.DownloadFromWeb;
+import com.ejang.restaurantwatch.AsyncTasks.LoadFromDB;
+import com.ejang.restaurantwatch.Utils.FilterType;
+import com.ejang.restaurantwatch.Utils.InspectionResult;
+import com.ejang.restaurantwatch.R;
+import com.ejang.restaurantwatch.Utils.Restaurant;
+import com.ejang.restaurantwatch.Views.RestaurantListAdapter;
+import com.ejang.restaurantwatch.SQLDB.DatabaseContract;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -39,21 +45,29 @@ import android.widget.TextView;
 
 public class BrowseActivity extends BaseActivity {
 
-    RestaurantListAdapter restaurantListAdapter;
-    ListView restaurantList;
-    HashMap<String, ArrayList<InspectionResult>> inspectionData;
-    ArrayList<Restaurant> allRestaurants;
-    static Double userLat;
-    static Double userLong;
-    static volatile AtomicBoolean locationSet;
-    static volatile AtomicBoolean adapterAvailable;
-    FloatingActionButton locationFab;
+    public RestaurantListAdapter restaurantListAdapter;
+    public ListView restaurantList;
+    public HashMap<String, ArrayList<InspectionResult>> inspectionData;
+    public ArrayList<Restaurant> allRestaurants;
+    public static Double userLat;
+    public static Double userLong;
+    public static volatile AtomicBoolean locationSet;
+    public static volatile AtomicBoolean adapterAvailable;
+    public static SQLiteDatabase writeableDB;
+
+    private SharedPreferences sharedPref;
+    private FloatingActionButton locationFab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Get a database that has read/write access to for this activity. Get the shared pref for
+        // checking when the last data update time was.
+        writeableDB = dbHelper.getWritableDatabase();
+        sharedPref = this.getPreferences(this.MODE_PRIVATE);
+
         locationSet = new AtomicBoolean(false);
-        adapterAvailable = new AtomicBoolean(false);
+        adapterAvailable = new AtomicBoolean(true);
         // Set frame content to the correct layout for this activity.
         FrameLayout contentFrameLayout = (FrameLayout) findViewById(R.id.content_frame);
         getLayoutInflater().inflate(R.layout.content_browse, contentFrameLayout);
@@ -79,44 +93,6 @@ public class BrowseActivity extends BaseActivity {
         });
 
         initializeAllRestaurants();
-
-//        // Add button click listeners.
-//        Button filterButton = (Button) findViewById(R.id.button_filter_search);
-//        filterButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                // TODO: implement this with alert dialog
-//            }
-//        });
-//
-//        Button searchButton = (Button) findViewById(R.id.button_sort_search);
-//        filterButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                // TODO: Implement this with alert dialog
-//            }
-//        });
-
-//        // check if GPS enabled
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-//
-//            ActivityCompat.requestPermissions(this,
-//                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-//                    1);
-//            System.err.println("you don't got permissions boi");
-//        }
-//        else
-//        {
-//            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-//            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-//        }
     }
 
     @Override
@@ -142,17 +118,16 @@ public class BrowseActivity extends BaseActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
+        // If refresh button clicked, then fetch data from City of Surrey website regardless of
+        // last refresh time.
         if (id == R.id.action_refresh) {
+            sharedPref.edit().putLong(getString(R.string.last_refresh_time), 0).commit();
             initializeAllRestaurants();
             return true;
         }
-
+        // If filter search button clicked, bring up dialog listing the filter options.
         if (id == R.id.action_filter_search)
         {
             showFilterDialog();
@@ -161,14 +136,16 @@ public class BrowseActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    // This method is the entry point for populating the ListView of restaurants. It decides whether
+    // the data should be fetched from the City of Surrey web API or from the local SQLite DB based
+    // on the previous update time from the API. If it was more than a week ago, it uses the API.
     public void initializeAllRestaurants() {
-        // Initialization of the adapter begins, so prevent it from being modified in other threads.
-        adapterAvailable.set(false);
-        // Reset restaurant data and fetch all info from API
+        // Initialize empty hashmap and array that will hold the inspection and restaurant data.
         inspectionData = new HashMap<>();
         allRestaurants = new ArrayList<>();
         restaurantListAdapter = null;
         restaurantList = null;
+        String lastRefreshTime = getString(R.string.last_refresh_time);
 
         // Make loading icon visible
         if (locationSet.get())
@@ -176,6 +153,37 @@ public class BrowseActivity extends BaseActivity {
             findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         }
 
+        // If the last refresh time from sharedPreferences shows that it's been more than a week
+        // since the last data update (from the City of Surrey website) then make HTTP requests
+        // and update the local SQLite DB.
+        if (isTimeToUpdate(sharedPref.getLong(lastRefreshTime, 0)))
+        {
+            if (adapterAvailable.get())
+            {
+                adapterAvailable.set(false);
+                writeableDB.execSQL(DatabaseContract.SQL_CLEAR_RES_TABLE);
+                writeableDB.execSQL(DatabaseContract.SQL_CLEAR_INSPECTION_TABLE);
+                // This makes async calls, so any statements after this line will run immediately.
+                // It will not wait for the tasks to finish.
+                downloadRestaurantsAndInspections();
+                sharedPref.edit().putLong(lastRefreshTime, System.currentTimeMillis()).commit();
+            }
+        }
+        else
+        {
+            if (adapterAvailable.get())
+            {
+                adapterAvailable.set(false);
+                // This makes async calls, so any statements after this line will run immediately.
+                // It will not wait for the tasks to finish.
+                new LoadFromDB(BrowseActivity.this).execute(writeableDB);
+                adapterAvailable.set(true);
+            }
+        }
+    }
+
+    private void downloadRestaurantsAndInspections()
+    {
         // Set up a request to get all inspection data. When response is returned, it starts
         // an async task to organize this data.
         String url = getString(R.string.url_all_inspections);
@@ -185,8 +193,8 @@ public class BrowseActivity extends BaseActivity {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        // Start AsyncTask to do the organize restaurant data in background.
-                        new DownloadAllInspections(BrowseActivity.this).execute(response);
+                        // Start AsyncTask to download/organize the inspection and restaurant data.
+                        new DownloadFromWeb(BrowseActivity.this).execute(response);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -199,98 +207,6 @@ public class BrowseActivity extends BaseActivity {
 
         queue.add(jsonRequest);
         System.err.println("Called first http at: " + System.currentTimeMillis());
-    }
-
-    public void addAllRestaurants() {
-        // Set up request to get all inspection data. On response, set the adapter and listview
-        // in this UI thread. This isn't heavy-weight enough to need an async task currently.
-        String url = getString(R.string.url_all_restaurants);
-        RequestQueue queue = Volley.newRequestQueue(this);
-
-        // This method is only called when a location is set, so make the "no location selected" text
-        // invisible. Also make the loading panel visible if it isn't at this point.
-        findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
-        if (findViewById(R.id.no_location_selected_text).getVisibility() != View.VISIBLE)
-        {
-            findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
-        }
-
-        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        System.err.println("Got second response at: " + System.currentTimeMillis());
-                        try {
-                            JSONArray restaurants = response.getJSONObject("result").getJSONArray("records");
-
-                            for (int i = 0; i < restaurants.length(); i++) {
-                                JSONObject restaurant = restaurants.getJSONObject(i);
-                                String name = restaurant.getString("NAME");
-                                String addr = restaurant.getString("PHYSICALADDRESS");
-                                String latitude = restaurant.getString("LATITUDE");
-                                String longitude = restaurant.getString("LONGITUDE");
-                                String trackingID = restaurant.getString("TRACKINGNUMBER");
-
-                                if (inspectionData.containsKey(trackingID)) {
-                                    Restaurant restaurantEntry = new Restaurant(name, addr, latitude,
-                                            longitude, trackingID, inspectionData.get(trackingID));
-                                    allRestaurants.add(restaurantEntry);
-                                } else {
-                                    Restaurant restaurantEntry = new Restaurant(name, addr, latitude,
-                                            longitude, trackingID, null);
-                                    allRestaurants.add(restaurantEntry);
-                                }
-                            }
-                            System.err.println("Finished second loop at: " + System.currentTimeMillis());
-                            Collections.sort(allRestaurants, new Comparator<Restaurant>() {
-                                @Override
-                                public int compare(Restaurant o1, Restaurant o2) {
-                                    return o1.distanceFromUser.compareTo(o2.distanceFromUser);
-                                }
-                            });
-                            restaurantListAdapter = new RestaurantListAdapter(BrowseActivity.this, allRestaurants);
-                            restaurantList = (ListView) findViewById(R.id.restaurant_listview);
-                            restaurantList.setAdapter(restaurantListAdapter);
-                            restaurantList.setOnScrollListener(new AbsListView.OnScrollListener() {
-                                @Override
-                                public void onScrollStateChanged(AbsListView view, int scrollState) {
-                                    if (scrollState == SCROLL_STATE_FLING) {
-                                        locationFab.hide();
-                                    }
-                                    else
-                                    {
-                                        locationFab.show();
-                                    }
-                                }
-
-                                @Override
-                                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-
-                                }
-                            });
-                            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-                            System.err.println("Set adapter at: " + System.currentTimeMillis());
-
-                            initializeSearchBar();
-                            // This is the last step of adapter initialization, so make it available again.
-                            adapterAvailable.set(true);
-
-                        } catch (JSONException e) {
-                            System.err.println("CAUGHT AN EXCEPTION: ");
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                System.err.println("That didn't work! here is the stacktrace: ");
-                error.printStackTrace();
-
-            }
-        });
-
-        queue.add(jsonRequest);
-        System.err.println("Made second http request at: " + System.currentTimeMillis());
     }
 
     public void initializeSearchBar()
@@ -330,8 +246,9 @@ public class BrowseActivity extends BaseActivity {
     }
 
     // If the restaurantListAdapter isn't being initialized, it is updated and the listview is reordered
-    // according to the new distances from user location.
-    protected void reorderResults()
+    // according to the new distances from user location. Might want to make this async task to wait
+    // for adapter to be not null and available.
+    private void reorderResults()
     {
         findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         if (restaurantListAdapter != null && adapterAvailable.get())
@@ -348,7 +265,7 @@ public class BrowseActivity extends BaseActivity {
     }
 
     // Helper for bringing up the multiple-choice filter dialog when "Filter Search" action is clicked.
-    protected void showFilterDialog()
+    private void showFilterDialog()
     {
         // Build an AlertDialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -415,5 +332,77 @@ public class BrowseActivity extends BaseActivity {
         AlertDialog dialog = builder.create();
         // Display the alert dialog on interface
         dialog.show();
+    }
+
+    public void initializeListView()
+    {
+        if (!adapterAvailable.get())
+        {
+            return;
+        }
+        adapterAvailable.set(false);
+        restaurantListAdapter = new RestaurantListAdapter(BrowseActivity.this, allRestaurants);
+        restaurantList = (ListView) findViewById(R.id.restaurant_listview);
+        restaurantList.setAdapter(restaurantListAdapter);
+        restaurantList.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState == SCROLL_STATE_FLING) {
+                    locationFab.hide();
+                }
+                else
+                {
+                    locationFab.show();
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+            }
+        });
+        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        System.err.println("Set adapter at: " + System.currentTimeMillis());
+
+        initializeSearchBar();
+        adapterAvailable.set(true);
+    }
+
+    public void addInspectionToMap(InspectionResult inspection)
+    {
+        // If trackingID key exists, add it. If not, create new key.
+        if (inspectionData.containsKey(inspection.trackingID))
+        {
+            ArrayList<InspectionResult> inspections = inspectionData.get(inspection.trackingID);
+            Boolean addedInspection = false;
+            Integer initialSize = inspections.size();
+            // This loop ensures that the inspections for the same key (trackingID) are organized by the date. Most recent inspection is last in the array.
+            for (int i = 0 ; i < initialSize ; i++)
+            {
+                if(inspections.get(i).inspectionDate.after(inspection.inspectionDate))
+                {
+                    inspections.add(i, inspection);
+                    addedInspection = true;
+                    break;
+                }
+            }
+            // Covers the case where the inspection to add is the most recent.
+            if (!addedInspection)
+            {
+                inspections.add(inspection);
+            }
+        }
+        else
+        {
+            ArrayList<InspectionResult> inspectionResults = new ArrayList<>();
+            inspectionResults.add(inspection);
+            inspectionData.put(inspection.trackingID, inspectionResults);
+        }
+    }
+
+    private boolean isTimeToUpdate(Long epochDate)
+    {
+        // 604800000 milliseconds = 1 week
+        return System.currentTimeMillis() - epochDate > 604800000;
     }
 }

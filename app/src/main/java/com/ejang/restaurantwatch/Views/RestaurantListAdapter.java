@@ -1,14 +1,18 @@
-package com.ejang.restaurantwatch;
+package com.ejang.restaurantwatch.Views;
 
-import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
-import android.widget.Filterable;
-import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.ejang.restaurantwatch.Activities.BrowseActivity;
+import com.ejang.restaurantwatch.R;
+import com.ejang.restaurantwatch.Utils.FilterType;
+import com.ejang.restaurantwatch.Utils.HazardRating;
+import com.ejang.restaurantwatch.Utils.InspectionResult;
+import com.ejang.restaurantwatch.Utils.Restaurant;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -119,7 +123,7 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
     }
 
     // Inner class defined to support different types of filtering.
-    protected class RestaurantFilter extends Filter
+    public class RestaurantFilter extends Filter
     {
         protected FilterType filterType;
 

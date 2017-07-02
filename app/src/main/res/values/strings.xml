@@ -19,4 +19,6 @@
     <string name="unknown_hazard">Unknown hazard</string>
     <string name="num_inspections">Number of inspections: %1$s</string>
     <string name="last_inspection_date">Last inspection date: %1$s</string>
+
+    <string name="last_refresh_time">last refresh time</string>
 </resources>
