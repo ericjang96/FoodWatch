@@ -66,6 +66,7 @@ public class BrowseActivity extends BaseActivity {
         writeableDB = dbHelper.getWritableDatabase();
         sharedPref = this.getPreferences(this.MODE_PRIVATE);
 
+        // TODO: instead of initializing this to false every time, make a sharedPreference entry for lat and long. If those fields exist, then locationSet will be true.
         locationSet = new AtomicBoolean(false);
         adapterAvailable = new AtomicBoolean(true);
         // Set frame content to the correct layout for this activity.
@@ -91,6 +92,13 @@ public class BrowseActivity extends BaseActivity {
                 }
             }
         });
+
+        // This will always be true at the moment, but that won't be the case later on. locationSet won't
+        // always be initialized to false inside onCreate. Instead, we will check for the value in sharedPreferences
+        if (!locationSet.get())
+        {
+            findViewById(R.id.no_location_selected_layout).setVisibility(View.VISIBLE);
+        }
 
         initializeAllRestaurants();
     }
@@ -230,13 +238,14 @@ public class BrowseActivity extends BaseActivity {
     {
         if (requestCode == 1) {
             if (resultCode == RESULT_OK) {
+                findViewById(R.id.no_location_selected_layout).setVisibility(View.GONE);
+                findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
                 Place place = PlacePicker.getPlace(data, this);
                 LatLng latlng = place.getLatLng();
                 userLat = latlng.latitude;
                 userLong = latlng.longitude;
                 locationSet.set(true);
 
-                findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
                 TextView location = (TextView) findViewById(R.id.listview_caption);
                 location.setText("Restaurants Near " + place.getAddress());
 
@@ -250,7 +259,6 @@ public class BrowseActivity extends BaseActivity {
     // for adapter to be not null and available.
     private void reorderResults()
     {
-        findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         if (restaurantListAdapter != null && adapterAvailable.get())
         {
             // Modifying the adapter, so make it unavailable to other threads.
