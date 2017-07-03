@@ -67,16 +67,43 @@ public class InspectionResult {
         }
     }
 
-    public void organizeViolationsLump(String violationsLump)
+    public static ArrayList<Violation> organizeViolationsLump(String violationsLump)
     {
-        String[] violations = violationsLump.split("|");
-        for (String violation : violations)
+        ArrayList<Violation> retViolations = new ArrayList<>();
+        if (violationsLump.length() == 0)
         {
-            String[] details = violation.split(",");
-            String code = details[0];
-            String crit = details[1];
-            String description = details[2];
-            this.violations.add(new Violation(code, crit, description));
+            return retViolations;
+        }
+        try
+        {
+            if (violationsLump.contains("|"))
+            {
+                String[] violations = violationsLump.split("\\|");
+                for (String violation : violations)
+                {
+                    String[] details = violation.split(",");
+                    String code = details[0];
+                    String crit = details[1];
+                    String description = details[2];
+                    retViolations.add(new Violation(code, crit, description));
+                }
+            }
+            else
+            {
+                String[] details = violationsLump.split(",");
+                String code = details[0];
+                String crit = details[1];
+                String description = details[2];
+                retViolations.add(new Violation(code, crit, description));
+            }
+        }
+        catch (ArrayIndexOutOfBoundsException e)
+        {
+            // Ignore this exception, just return an empty array if there is a problem.
+        }
+        finally
+        {
+            return retViolations;
         }
     }
 

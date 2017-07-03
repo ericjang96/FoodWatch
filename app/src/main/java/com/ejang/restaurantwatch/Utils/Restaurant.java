@@ -32,7 +32,7 @@ public class Restaurant {
     public void updateDistanceFromUser()
     {
         float[] results = {0,0,0};
-        android.location.Location.distanceBetween(this.latitude, this.longitude, BrowseActivity.userLat, BrowseActivity.userLong, results);
+        android.location.Location.distanceBetween(this.latitude, this.longitude, BrowseActivity.getUserLat(), BrowseActivity.getUserLong(), results);
         this.distanceFromUser = Float.valueOf(results[0]);
     }
 }

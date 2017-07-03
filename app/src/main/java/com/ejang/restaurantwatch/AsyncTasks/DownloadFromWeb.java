@@ -155,7 +155,9 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                                 }
                             });
 
-                            activity.adapterAvailable.set(true);
+                            // Once all inspection and restaurant data has been processed, save current
+                            // time to shared pref as the refresh time.
+                            BrowseActivity.getSharedPref().edit().putLong(activity.getString(R.string.last_refresh_time), System.currentTimeMillis()).commit();
                             activity.initializeListView();
 
                         } catch (JSONException e) {

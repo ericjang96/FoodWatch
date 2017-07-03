@@ -12,8 +12,7 @@ import android.view.MenuItem;
 import com.ejang.restaurantwatch.R;
 import com.ejang.restaurantwatch.SQLDB.DatabaseContract.DatabaseHelper;
 
-// TODO: Implement SQLite DB so we only make HTTP requests when explicitly asked by user
-//       each time. Would only update on user command in this case
+
 // TODO: Add another activity for restaurant details when listview item is clicked
 // TODO: Add distance from user on listview item + arrow to make it look clickable
 // TODO: Consider uploading to GooglePlay at this point

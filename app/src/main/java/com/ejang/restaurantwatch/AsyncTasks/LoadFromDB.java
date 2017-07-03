@@ -66,6 +66,7 @@ public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
 
             activity.addInspectionToMap(new InspectionResult(trackingID, date, type, violLump, hazard, numCrit, numNonCrit));
         }
+        inspectionCursor.close();
 
         // Wait until location is set in the UI thread to initialize restaurant data because they
         // need the distance from the user's chosen location.
@@ -99,6 +100,7 @@ public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
                         longitude, trackingID, null));
             }
         }
+        cursor.close();
 
         // Sort the restaurants by distance from user's selected location and return
         Collections.sort(activity.allRestaurants, new Comparator<Restaurant>() {
@@ -113,7 +115,9 @@ public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
 
     // Called when background task finishes.
     @Override
-    protected void onPostExecute(Void v) {
+    protected void onPostExecute(Void v)
+    {
+        System.err.println("Calling initialize list view after load from db");
         activity.initializeListView();
     }
 }

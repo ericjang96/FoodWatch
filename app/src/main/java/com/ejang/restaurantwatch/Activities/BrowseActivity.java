@@ -49,13 +49,14 @@ public class BrowseActivity extends BaseActivity {
     public ListView restaurantList;
     public HashMap<String, ArrayList<InspectionResult>> inspectionData;
     public ArrayList<Restaurant> allRestaurants;
-    public static Double userLat;
-    public static Double userLong;
     public static volatile AtomicBoolean locationSet;
-    public static volatile AtomicBoolean adapterAvailable;
+    public static volatile AtomicBoolean dataAndAdapterAvailable;
     public static SQLiteDatabase writeableDB;
+    public static boolean listViewInitialized;
 
-    private SharedPreferences sharedPref;
+    private static SharedPreferences sharedPref;
+    private static Double userLat;
+    private static Double userLong;
     private FloatingActionButton locationFab;
 
     @Override
@@ -68,7 +69,9 @@ public class BrowseActivity extends BaseActivity {
 
         // TODO: instead of initializing this to false every time, make a sharedPreference entry for lat and long. If those fields exist, then locationSet will be true.
         locationSet = new AtomicBoolean(false);
-        adapterAvailable = new AtomicBoolean(true);
+        dataAndAdapterAvailable = new AtomicBoolean(true);
+        // For now, this field is just for testing purposes.
+        listViewInitialized = false;
         // Set frame content to the correct layout for this activity.
         FrameLayout contentFrameLayout = (FrameLayout) findViewById(R.id.content_frame);
         getLayoutInflater().inflate(R.layout.content_browse, contentFrameLayout);
@@ -158,6 +161,7 @@ public class BrowseActivity extends BaseActivity {
         // Make loading icon visible
         if (locationSet.get())
         {
+            findViewById(R.id.no_location_selected_layout).setVisibility(View.GONE);
             findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         }
 
@@ -166,26 +170,24 @@ public class BrowseActivity extends BaseActivity {
         // and update the local SQLite DB.
         if (isTimeToUpdate(sharedPref.getLong(lastRefreshTime, 0)))
         {
-            if (adapterAvailable.get())
+            if (dataAndAdapterAvailable.get())
             {
-                adapterAvailable.set(false);
+                dataAndAdapterAvailable.set(false);
                 writeableDB.execSQL(DatabaseContract.SQL_CLEAR_RES_TABLE);
                 writeableDB.execSQL(DatabaseContract.SQL_CLEAR_INSPECTION_TABLE);
                 // This makes async calls, so any statements after this line will run immediately.
                 // It will not wait for the tasks to finish.
                 downloadRestaurantsAndInspections();
-                sharedPref.edit().putLong(lastRefreshTime, System.currentTimeMillis()).commit();
             }
         }
         else
         {
-            if (adapterAvailable.get())
+            if (dataAndAdapterAvailable.get())
             {
-                adapterAvailable.set(false);
+                dataAndAdapterAvailable.set(false);
                 // This makes async calls, so any statements after this line will run immediately.
                 // It will not wait for the tasks to finish.
                 new LoadFromDB(BrowseActivity.this).execute(writeableDB);
-                adapterAvailable.set(true);
             }
         }
     }
@@ -259,16 +261,16 @@ public class BrowseActivity extends BaseActivity {
     // for adapter to be not null and available.
     private void reorderResults()
     {
-        if (restaurantListAdapter != null && adapterAvailable.get())
+        if (restaurantListAdapter != null && dataAndAdapterAvailable.get())
         {
             // Modifying the adapter, so make it unavailable to other threads.
-            adapterAvailable.set(false);
+            dataAndAdapterAvailable.set(false);
             restaurantListAdapter.updateDistancesFromUser();
             // Makes the listview scroll to top after updating
             restaurantList.setSelectionAfterHeaderView();
             findViewById(R.id.loadingPanel).setVisibility(View.GONE);
             // Make adapter available again
-            adapterAvailable.set(true);
+            dataAndAdapterAvailable.set(true);
         }
     }
 
@@ -344,11 +346,6 @@ public class BrowseActivity extends BaseActivity {
 
     public void initializeListView()
     {
-        if (!adapterAvailable.get())
-        {
-            return;
-        }
-        adapterAvailable.set(false);
         restaurantListAdapter = new RestaurantListAdapter(BrowseActivity.this, allRestaurants);
         restaurantList = (ListView) findViewById(R.id.restaurant_listview);
         restaurantList.setAdapter(restaurantListAdapter);
@@ -373,7 +370,8 @@ public class BrowseActivity extends BaseActivity {
         System.err.println("Set adapter at: " + System.currentTimeMillis());
 
         initializeSearchBar();
-        adapterAvailable.set(true);
+        listViewInitialized = true;
+        dataAndAdapterAvailable.set(true);
     }
 
     public void addInspectionToMap(InspectionResult inspection)
@@ -412,5 +410,30 @@ public class BrowseActivity extends BaseActivity {
     {
         // 604800000 milliseconds = 1 week
         return System.currentTimeMillis() - epochDate > 604800000;
+    }
+
+    public static Double getUserLat()
+    {
+        return userLat;
+    }
+
+    public static Double getUserLong()
+    {
+        return userLong;
+    }
+
+    public static void setUserLat(Double lat)
+    {
+        userLat = lat;
+    }
+
+    public static void setUserLong(Double longitude)
+    {
+        userLong = longitude;
+    }
+
+    public static SharedPreferences getSharedPref()
+    {
+        return sharedPref;
     }
 }

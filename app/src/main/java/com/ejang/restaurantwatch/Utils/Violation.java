@@ -6,15 +6,30 @@ package com.ejang.restaurantwatch.Utils;
 
 public class Violation {
 
-    String violationCode;
-    String violationCrit;
-    String violationDetail;
+    private String violationCode;
+    private String violationCrit;
+    private String violationDetail;
 
     public Violation(String code, String crit, String detail)
     {
         this.violationCode = code;
         this.violationCrit = crit;
         this.violationDetail = detail;
+    }
+
+    public String getViolationCode()
+    {
+        return violationCode;
+    }
+
+    public String getViolationCrit()
+    {
+        return violationCrit;
+    }
+
+    public String getViolationDetail()
+    {
+        return violationDetail;
     }
 
 }

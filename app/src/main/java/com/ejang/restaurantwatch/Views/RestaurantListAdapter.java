@@ -73,16 +73,28 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
 
 
         ArrayList<InspectionResult> results = item.inspectionResults;
-        if (results != null) {
-            if (results.get(0).hazardRating == HazardRating.UNSAFE) {
+        HazardRating hazard = results.get(0).hazardRating;
+        if (results != null)
+        {
+            if (hazard == HazardRating.UNSAFE)
+            {
                 cleanliness.setText(context.getString(R.string.high_hazard));
                 cleanliness.setTextColor(context.getColor(R.color.colorHighHazard));
-            } else if (results.get(0).hazardRating == HazardRating.SAFE) {
+            }
+            else if (hazard == HazardRating.SAFE)
+            {
                 cleanliness.setText(context.getString(R.string.low_hazard));
                 cleanliness.setTextColor(context.getColor(R.color.colorLowHazard));
-            } else {
+            }
+            else if (hazard == HazardRating.MODERATE)
+            {
                 cleanliness.setText(context.getString(R.string.mod_hazard));
                 cleanliness.setTextColor(context.getColor(R.color.colorModerateHazard));
+            }
+            else
+            {
+                cleanliness.setText(context.getString(R.string.unknown_hazard));
+                cleanliness.setTextColor(context.getColor(R.color.greyFont));
             }
 
             numInspections.setText(context.getString(R.string.num_inspections, String.valueOf(results.size())));
@@ -153,13 +165,10 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
                 ArrayList<Restaurant> filteredRestaurants = new ArrayList<>();
 
                 for (Restaurant restaurant : allOriginalRestaurants) {
-                    System.err.println("constraint: " + constraint.toString());
-                    System.err.println("restaurant name: " + restaurant.name);
                     // Filter by matching text in the search box to the restaurant's name.
                     if (filterType == FilterType.TEXT_SEARCH)
                     {
                         if (restaurant.name.toLowerCase().contains(constraint.toString().toLowerCase())) {
-                            System.err.println("satisfied condition");
                             filteredRestaurants.add(restaurant);
                         }
                     }

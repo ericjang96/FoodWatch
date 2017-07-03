@@ -107,7 +107,8 @@
                 android:id="@+id/no_location_selected_layout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:gravity="center">
+                android:gravity="center"
+                android:visibility="invisible">
 
                 <TextView
                     android:id="@+id/no_location_selected_text"

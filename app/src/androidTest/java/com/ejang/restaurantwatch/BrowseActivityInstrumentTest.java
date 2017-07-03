@@ -40,19 +40,24 @@ public class BrowseActivityInstrumentTest {
     @Before
     public void setExampleLocation()
     {
-        BrowseActivity.userLat = 49.191461;
-        BrowseActivity.userLong = -122.849329;
+        BrowseActivity.setUserLat(49.191461);
+        BrowseActivity.setUserLong(-122.849329);
         BrowseActivity.locationSet.set(true);
     }
 
     @Test
     public void searchByTextTest() {
 
-        // Sleep for 10 seconds until the list is loaded. Consider using idling resource.
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        // Wait until the ListView is available before typing anything in the search bar.
+        while (!BrowseActivity.listViewInitialized)
+        {
+            try
+            {
+                Thread.sleep(100);
+            } catch (InterruptedException e)
+            {
+                e.printStackTrace();
+            }
         }
 
         ViewInteraction searchInputView = onView(
