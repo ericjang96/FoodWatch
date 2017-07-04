@@ -254,7 +254,23 @@ public class BrowseActivity extends BaseActivity {
                 locationSet.set(true);
 
                 TextView location = (TextView) findViewById(R.id.listview_caption);
-                location.setText("Restaurants Near " + place.getAddress());
+
+                String placeName = String.valueOf(place.getName());
+                // If name isn't a coordinate, use the name.
+                if (!placeName.contains("°") && !placeName.contains("\""))
+                {
+                    location.setText("Restaurants Near " + place.getName());
+                }
+                // Next best choice is an address if there is one.
+                else if (place.getAddress().length() > 0)
+                {
+                    location.setText("Restaurants Near " + place.getAddress());
+                }
+                // last resort is the coordinates.
+                else
+                {
+                    location.setText("Restaurants Near " + place.getName());
+                }
 
                 reorderResults();
             }
