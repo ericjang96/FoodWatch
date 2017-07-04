@@ -17,6 +17,7 @@ public class Restaurant {
     public String trackingID;
     public ArrayList<InspectionResult> inspectionResults;
     public Float distanceFromUser;
+    public HazardRating mostRecentSafety;
 
     public Restaurant(String name, String address, Double latitude, Double longitude, String trackingID, ArrayList<InspectionResult> inspections)
     {
@@ -27,6 +28,14 @@ public class Restaurant {
         this.trackingID = trackingID;
         this.inspectionResults = inspections;
         updateDistanceFromUser();
+        if (inspections == null || inspections.size() == 0)
+        {
+            mostRecentSafety = HazardRating.UNKNOWN;
+        }
+        else
+        {
+            mostRecentSafety = inspections.get(0).hazardRating;
+        }
     }
 
     public void updateDistanceFromUser()

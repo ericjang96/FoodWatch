@@ -9,8 +9,10 @@ import com.ejang.restaurantwatch.Utils.InspectionResult;
 import com.ejang.restaurantwatch.Utils.Restaurant;
 import com.ejang.restaurantwatch.SQLDB.DatabaseContract;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 
 
 // Asynchronous task for loading all restaurant and inspection data from the SQLite DB. This task
@@ -18,15 +20,29 @@ import java.util.Comparator;
 public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
 
     private BrowseActivity activity;
+    private HashMap<String, ArrayList<InspectionResult>> inspectionDataToReturn;
+    private ArrayList<Restaurant> restaurantDataToReturn;
 
     public LoadFromDB(BrowseActivity activity)
     {
         // Only BrowseActivity will directly call this constructor, so we can access its fields.
         this.activity = activity;
+        inspectionDataToReturn = new HashMap<>();
+        restaurantDataToReturn = new ArrayList<>();
     }
 
     @Override
     protected Void doInBackground(SQLiteDatabase... params) {
+
+        while (!activity.dataAndAdapterAvailable.get())
+        {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        activity.dataAndAdapterAvailable.set(false);
 
         SQLiteDatabase writeableDB = params[0];
 
@@ -64,9 +80,10 @@ public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
             Integer numCrit = inspectionCursor.getInt(inspectionCursor.getColumnIndexOrThrow(projectionInspection[5]));
             Integer numNonCrit = inspectionCursor.getInt(inspectionCursor.getColumnIndexOrThrow(projectionInspection[6]));
 
-            activity.addInspectionToMap(new InspectionResult(trackingID, date, type, violLump, hazard, numCrit, numNonCrit));
+            addInspectionToMap(new InspectionResult(trackingID, date, type, violLump, hazard, numCrit, numNonCrit));
         }
         inspectionCursor.close();
+        activity.setInspectionData(inspectionDataToReturn);
 
         // Wait until location is set in the UI thread to initialize restaurant data because they
         // need the distance from the user's chosen location.
@@ -89,26 +106,28 @@ public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
             Double latitude = cursor.getDouble(cursor.getColumnIndexOrThrow(projectionRestaurant[3]));
             Double longitude = cursor.getDouble(cursor.getColumnIndexOrThrow(projectionRestaurant[4]));
 
-            if (activity.inspectionData.containsKey(trackingID))
+            if (inspectionDataToReturn.containsKey(trackingID))
             {
-                activity.allRestaurants.add(new Restaurant(resName, address, latitude,
-                        longitude, trackingID, activity.inspectionData.get(trackingID)));
+                restaurantDataToReturn.add(new Restaurant(resName, address, latitude,
+                        longitude, trackingID, inspectionDataToReturn.get(trackingID)));
             }
             else
             {
-                activity.allRestaurants.add(new Restaurant(resName, address, latitude,
+                restaurantDataToReturn.add(new Restaurant(resName, address, latitude,
                         longitude, trackingID, null));
             }
         }
         cursor.close();
 
         // Sort the restaurants by distance from user's selected location and return
-        Collections.sort(activity.allRestaurants, new Comparator<Restaurant>() {
+        Collections.sort(restaurantDataToReturn, new Comparator<Restaurant>() {
             @Override
             public int compare(Restaurant o1, Restaurant o2) {
                 return o1.distanceFromUser.compareTo(o2.distanceFromUser);
             }
         });
+
+        activity.setRestaurantData(restaurantDataToReturn);
 
         return null;
     }
@@ -118,6 +137,42 @@ public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
     protected void onPostExecute(Void v)
     {
         System.err.println("Calling initialize list view after load from db");
+        if (!activity.updateCheckerStarted)
+        {
+            activity.startUpdateChecker();
+        }
         activity.initializeListView();
+    }
+
+    private void addInspectionToMap(InspectionResult inspection)
+    {
+        // If trackingID key exists, add it. If not, create new key.
+        if (inspectionDataToReturn.containsKey(inspection.trackingID))
+        {
+            ArrayList<InspectionResult> inspections = inspectionDataToReturn.get(inspection.trackingID);
+            Boolean addedInspection = false;
+            Integer initialSize = inspections.size();
+            // This loop ensures that the inspections for the same key (trackingID) are organized by the date. Most recent inspection is last in the array.
+            for (int i = 0 ; i < initialSize ; i++)
+            {
+                if(inspections.get(i).inspectionDate.after(inspection.inspectionDate))
+                {
+                    inspections.add(i, inspection);
+                    addedInspection = true;
+                    break;
+                }
+            }
+            // Covers the case where the inspection to add is the most recent.
+            if (!addedInspection)
+            {
+                inspections.add(inspection);
+            }
+        }
+        else
+        {
+            ArrayList<InspectionResult> inspectionResults = new ArrayList<>();
+            inspectionResults.add(inspection);
+            inspectionDataToReturn.put(inspection.trackingID, inspectionResults);
+        }
     }
 }

@@ -14,7 +14,6 @@ import com.ejang.restaurantwatch.SQLDB.DatabaseContract.DatabaseHelper;
 
 
 // TODO: Add another activity for restaurant details when listview item is clicked
-// TODO: Add distance from user on listview item + arrow to make it look clickable
 // TODO: Consider uploading to GooglePlay at this point
 // TODO: Add notification to navigation bar and allow users to be emailed or sent notifs
 // TODO: Add favorite option to filter results. Users can favorite restaurants in the new activity

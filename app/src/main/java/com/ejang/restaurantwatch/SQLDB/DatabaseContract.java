@@ -44,7 +44,13 @@ public final class DatabaseContract {
                     RestaurantTable.COLUMN_RES_NAME + " TEXT," +
                     RestaurantTable.COLUMN_RES_ADDRESS + " TEXT," +
                     RestaurantTable.COLUMN_RES_LAT + " REAL," +
-                    RestaurantTable.COLUMN_RES_LONG + " REAL)";
+                    RestaurantTable.COLUMN_RES_LONG + " REAL," +
+                    "UNIQUE (" + RestaurantTable.COLUMN_TRACKING_ID + ", " +
+                    RestaurantTable.COLUMN_RES_NAME + ", " +
+                    RestaurantTable.COLUMN_RES_ADDRESS + ", " +
+                    RestaurantTable.COLUMN_RES_LAT + ", " +
+                    RestaurantTable.COLUMN_RES_LONG +
+                    ") ON CONFLICT REPLACE )";
 
     public static final String SQL_DELETE_RES_TABLE =
             "DROP TABLE IF EXISTS " + RestaurantTable.RES_TABLE_NAME;
@@ -58,7 +64,15 @@ public final class DatabaseContract {
                     InspectionTable.COLUMN_INSPECTION_VIOLLUMP + " TEXT," +
                     InspectionTable.COLUMN_INSPECTION_HAZARD + " TEXT," +
                     InspectionTable.COLUMN_INSPECTION_NUM_CRIT + " INTEGER," +
-                    InspectionTable.COLUMN_INSPECTION_NUM_NONCRIT + " INTEGER)";
+                    InspectionTable.COLUMN_INSPECTION_NUM_NONCRIT + " INTEGER, " +
+                    "UNIQUE (" + InspectionTable.COLUMN_TRACKING_ID + ", " +
+                    InspectionTable.COLUMN_INSPECTION_DATE + ", " +
+                    InspectionTable.COLUMN_INSPECTION_TYPE + ", " +
+                    InspectionTable.COLUMN_INSPECTION_VIOLLUMP + ", " +
+                    InspectionTable.COLUMN_INSPECTION_HAZARD + ", " +
+                    InspectionTable.COLUMN_INSPECTION_NUM_CRIT + ", " +
+                    InspectionTable.COLUMN_INSPECTION_NUM_NONCRIT +
+                     ") ON CONFLICT REPLACE )";
 
     public static final String SQL_DELETE_INSPECTION_TABLE =
             "DROP TABLE IF EXISTS " + InspectionTable.INSPECTION_TABLE_NAME;

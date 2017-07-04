@@ -71,32 +71,32 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
 
         DateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy");
 
+        HazardRating hazard = item.mostRecentSafety;
+
+        if (hazard == HazardRating.UNSAFE)
+        {
+            cleanliness.setText(context.getString(R.string.high_hazard));
+            cleanliness.setTextColor(context.getColor(R.color.colorHighHazard));
+        }
+        else if (hazard == HazardRating.SAFE)
+        {
+            cleanliness.setText(context.getString(R.string.low_hazard));
+            cleanliness.setTextColor(context.getColor(R.color.colorLowHazard));
+        }
+        else if (hazard == HazardRating.MODERATE)
+        {
+            cleanliness.setText(context.getString(R.string.mod_hazard));
+            cleanliness.setTextColor(context.getColor(R.color.colorModerateHazard));
+        }
+        else
+        {
+            cleanliness.setText(context.getString(R.string.unknown_hazard));
+            cleanliness.setTextColor(context.getColor(R.color.greyFont));
+        }
 
         ArrayList<InspectionResult> results = item.inspectionResults;
-        HazardRating hazard = results.get(0).hazardRating;
-        if (results != null)
+        if (results != null || results.size() == 0)
         {
-            if (hazard == HazardRating.UNSAFE)
-            {
-                cleanliness.setText(context.getString(R.string.high_hazard));
-                cleanliness.setTextColor(context.getColor(R.color.colorHighHazard));
-            }
-            else if (hazard == HazardRating.SAFE)
-            {
-                cleanliness.setText(context.getString(R.string.low_hazard));
-                cleanliness.setTextColor(context.getColor(R.color.colorLowHazard));
-            }
-            else if (hazard == HazardRating.MODERATE)
-            {
-                cleanliness.setText(context.getString(R.string.mod_hazard));
-                cleanliness.setTextColor(context.getColor(R.color.colorModerateHazard));
-            }
-            else
-            {
-                cleanliness.setText(context.getString(R.string.unknown_hazard));
-                cleanliness.setTextColor(context.getColor(R.color.greyFont));
-            }
-
             numInspections.setText(context.getString(R.string.num_inspections, String.valueOf(results.size())));
 
             if (lastInspectionDate != null) {
@@ -144,17 +144,30 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         this.notifyDataSetChanged();
     }
 
+    public void updateAdapterData(ArrayList<Restaurant> restaurants)
+    {
+        this.clear();
+        this.addAll(restaurants);
+        this.allOriginalRestaurants.clear();
+        this.allOriginalRestaurants.addAll(restaurants);
+        this.notifyDataSetChanged();
+    }
+
+    public boolean includeSafe = true;
+    protected boolean includeModerate = true;
+    protected boolean includeUnsafe = true;
+    protected boolean includeUnknown = true;
+
     // Inner class defined to support different types of filtering.
     public class RestaurantFilter extends Filter
     {
-        protected FilterType filterType;
 
         @Override
         protected FilterResults performFiltering(CharSequence constraint) {
 
             FilterResults results = new FilterResults();
             System.err.println("tryna filter dawg");
-            if (constraint == null || constraint.length() == 0)
+            if (constraint == null)
             {
                 // No constraint given, so nothing to change in the original array.
                 results.values = allOriginalRestaurants;
@@ -166,25 +179,11 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
 
                 for (Restaurant restaurant : allOriginalRestaurants) {
                     // Filter by matching text in the search box to the restaurant's name.
-                    if (filterType == FilterType.TEXT_SEARCH)
+                    if (restaurant.name.toLowerCase().contains(constraint.toString().toLowerCase()))
                     {
-                        if (restaurant.name.toLowerCase().contains(constraint.toString().toLowerCase())) {
-                            filteredRestaurants.add(restaurant);
-                        }
-                    }
-                    // Filter depending on the safety ratings chosen by the user.
-                    else if (filterType == FilterType.SAFETY_RATING)
-                    {
-                        // If the restaurant doesn't have any inspection data, skip it.
-                        if (restaurant.inspectionResults == null)
-                        {
-                            continue;
-                        }
-                        if (constraint.toString().contains("safe") && restaurant.inspectionResults.get(0).hazardRating == HazardRating.SAFE)
-                        {
-                            filteredRestaurants.add(restaurant);
-                        }
-                        else if (constraint.toString().contains("moderate") && restaurant.inspectionResults.get(0).hazardRating == HazardRating.MODERATE)
+                        HazardRating hazard = restaurant.mostRecentSafety;
+                        if ((includeSafe && hazard == HazardRating.SAFE) || (includeModerate && hazard == HazardRating.MODERATE)
+                                || (includeUnsafe && hazard == HazardRating.UNSAFE) || (includeUnknown && hazard == HazardRating.UNKNOWN))
                         {
                             filteredRestaurants.add(restaurant);
                         }
@@ -211,10 +210,24 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
             }
         }
 
-        public Filter setFilterType(FilterType filterType)
+        public void setIncludeSafe(boolean includeSafe)
         {
-            this.filterType = filterType;
-            return this;
+            RestaurantListAdapter.this.includeSafe = includeSafe;
+        }
+
+        public void setIncludeModerate(boolean includeModerate)
+        {
+            RestaurantListAdapter.this.includeModerate = includeModerate;
+        }
+
+        public void setIncludeUnsafe(boolean includeUnsafe)
+        {
+            RestaurantListAdapter.this.includeUnsafe = includeUnsafe;
+        }
+
+        public void setIncludeUnknown(boolean includeUnknown)
+        {
+            RestaurantListAdapter.this.includeUnknown = includeUnknown;
         }
     }
 }

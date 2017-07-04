@@ -41,13 +41,8 @@ public class InspectionResult {
         this.numCritical = numCritical;
         this.numNonCritical = numNonCritical;
         this.violLump = violationsLump;
-        this.violations = new ArrayList<>();
+        this.violations = organizeViolationsLump(violationsLump);
         this.hazardRatingString = hazardRating;
-
-        if (violationsLump.length() > 0)
-        {
-            // TODO: call organizeViolationsLump when it is implemented
-        }
 
         if (hazardRating.equalsIgnoreCase("low"))
         {

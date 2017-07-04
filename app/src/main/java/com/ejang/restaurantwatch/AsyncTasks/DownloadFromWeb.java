@@ -25,22 +25,48 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 
 // Asynchronous task for downloading and processing JSON object from the City of Surrey web API.
 public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantListAdapter>
 {
     private BrowseActivity activity;
+    private Boolean updateQuietly;
+    private HashMap<String, ArrayList<InspectionResult>> inspectionDataToReturn;
+    private ArrayList<Restaurant> restaurantDataToReturn;
 
-    public DownloadFromWeb(BrowseActivity activity)
+    public DownloadFromWeb(BrowseActivity activity, Boolean updateQuietly)
     {
         // Only BrowseActivity will directly call this constructor, so we can access its fields.
         this.activity = activity;
+        this.updateQuietly = updateQuietly;
+        inspectionDataToReturn = new HashMap<>();
+        restaurantDataToReturn = new ArrayList<>();
     }
 
     @Override
     protected RestaurantListAdapter doInBackground(JSONObject... params) {
+
+        System.err.println("update quietly: " + updateQuietly.toString() + "  available: " + String.valueOf(activity.dataAndAdapterAvailable.get()));
+        while (!activity.dataAndAdapterAvailable.get())
+        {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        activity.dataAndAdapterAvailable.set(false);
+
+        if (updateQuietly){
+            System.err.println("CLEARING TABLES AND UDPATING QUIETLY");
+//            activity.writeableDB.execSQL(SQL_CLEAR_RES_TABLE);
+//            activity.writeableDB.execSQL(SQL_CLEAR_INSPECTION_TABLE);
+        }
+
         // Organize all of the data for setting up the adapter and listview.
         JSONObject response = params[0];
         try
@@ -60,8 +86,13 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                         hazardRating, numCrit, numNonCrit);
 
                 addInspectionToDB(result);
-                activity.addInspectionToMap(result);
+                addInspectionToMap(result);
             }
+
+            // activity.writeableDB.execSQL(SQL_JOIN_TEMP_INSPECTION_TABLE_TO_REAL);
+            activity.setInspectionData(inspectionDataToReturn);
+
+
             System.err.println("Finished first loop at: " + System.currentTimeMillis());
         } catch (JSONException e) {
             e.printStackTrace();
@@ -110,12 +141,8 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
         RequestQueue queue = Volley.newRequestQueue(activity);
 
         // This method is only called when a location is set, so make the "no location selected" text
-        // invisible. Also make the loading panel visible if it isn't at this point.
+        // invisible.
         activity.findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
-        if (activity.findViewById(R.id.no_location_selected_text).getVisibility() != View.VISIBLE)
-        {
-            activity.findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
-        }
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
@@ -144,11 +171,11 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                                     restaurantEntry = new Restaurant(name, addr, latitude,
                                             longitude, trackingID, null);
                                 }
-                                activity.allRestaurants.add(restaurantEntry);
+                                restaurantDataToReturn.add(restaurantEntry);
                                 addRestaurantToDB(restaurantEntry);
                             }
                             System.err.println("Finished second loop at: " + System.currentTimeMillis());
-                            Collections.sort(activity.allRestaurants, new Comparator<Restaurant>() {
+                            Collections.sort(restaurantDataToReturn, new Comparator<Restaurant>() {
                                 @Override
                                 public int compare(Restaurant o1, Restaurant o2) {
                                     return o1.distanceFromUser.compareTo(o2.distanceFromUser);
@@ -158,7 +185,20 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                             // Once all inspection and restaurant data has been processed, save current
                             // time to shared pref as the refresh time.
                             BrowseActivity.getSharedPref().edit().putLong(activity.getString(R.string.last_refresh_time), System.currentTimeMillis()).commit();
-                            activity.initializeListView();
+
+                            activity.setRestaurantData(restaurantDataToReturn);
+                            if (!updateQuietly)
+                            {
+                                activity.initializeListView();
+                            }
+                            else
+                            {
+                                activity.askToUpdateAdapter();
+                            }
+                            if (!activity.updateCheckerStarted)
+                            {
+                                activity.startUpdateChecker();
+                            }
 
                         } catch (JSONException e) {
                             System.err.println("CAUGHT AN EXCEPTION: ");
@@ -190,5 +230,37 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
 
         // Insert the new row, returning the primary key value of the new row
         long newRowId = activity.writeableDB.insert(DatabaseContract.RestaurantTable.RES_TABLE_NAME, null, values);
+    }
+
+    private void addInspectionToMap(InspectionResult inspection)
+    {
+        // If trackingID key exists, add it. If not, create new key.
+        if (inspectionDataToReturn.containsKey(inspection.trackingID))
+        {
+            ArrayList<InspectionResult> inspections = inspectionDataToReturn.get(inspection.trackingID);
+            Boolean addedInspection = false;
+            Integer initialSize = inspections.size();
+            // This loop ensures that the inspections for the same key (trackingID) are organized by the date. Most recent inspection is last in the array.
+            for (int i = 0 ; i < initialSize ; i++)
+            {
+                if(inspections.get(i).inspectionDate.after(inspection.inspectionDate))
+                {
+                    inspections.add(i, inspection);
+                    addedInspection = true;
+                    break;
+                }
+            }
+            // Covers the case where the inspection to add is the most recent.
+            if (!addedInspection)
+            {
+                inspections.add(inspection);
+            }
+        }
+        else
+        {
+            ArrayList<InspectionResult> inspectionResults = new ArrayList<>();
+            inspectionResults.add(inspection);
+            inspectionDataToReturn.put(inspection.trackingID, inspectionResults);
+        }
     }
 }

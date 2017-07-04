@@ -34,6 +34,19 @@ public class UtilUnitTest {
     }
 
     @Test
+    public void testOrganizeOneViolation()
+    {
+        String lump = "209,Not Critical,Food not protected from contamination [s. 12(a)],Not Repeat";
+
+        ArrayList<Violation> violations = InspectionResult.organizeViolationsLump(lump);
+
+        assertEquals(1, violations.size());
+        assertEquals("209", violations.get(0).getViolationCode());
+        assertEquals("Not Critical", violations.get(0).getViolationCrit());
+        assertEquals("Food not protected from contamination [s. 12(a)]", violations.get(0).getViolationDetail());
+    }
+
+    @Test
     public void testOrganizeViolLumpEmpty()
     {
         String lump = "";
