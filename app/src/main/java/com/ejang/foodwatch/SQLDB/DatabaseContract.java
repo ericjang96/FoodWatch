@@ -1,9 +1,15 @@
-package com.ejang.restaurantwatch.SQLDB;
+package com.ejang.foodwatch.SQLDB;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Created by Eric on 2017-06-24.
@@ -86,10 +92,11 @@ public final class DatabaseContract {
     public static class DatabaseHelper extends SQLiteOpenHelper {
         // If you change the database schema, you must increment the database version.
         public static final int DATABASE_VERSION = 1;
-        public static final String DATABASE_NAME = "RestaurantWatch.db";
+        public static final String DATABASE_NAME = "FoodWatch.db";
 
         public DatabaseHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
+            this.myContext = context;
         }
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(SQL_CREATE_RES_TABLE);
@@ -105,6 +112,81 @@ public final class DatabaseContract {
         }
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             onUpgrade(db, oldVersion, newVersion);
+        }
+
+        // This is the path where the main DB for the app will be.
+        private static String DB_PATH = "/data/data/com.ejang.foodwatch/databases/";
+        private static String DB_NAME = "FoodWatch.db";
+        private final Context myContext;
+
+        // Creates an empty database file where the main DB will be. Copies contents from default
+        // DB located in the assets folder. Throws an exception if it fails to create/copy.
+        public void createDefaultDB() throws IOException {
+
+            boolean dbExist = checkDataBase();
+
+            if(!dbExist)
+            {
+                // This method will create an empty database in the default system path that I can
+                // copy the DB asset into.
+                this.getReadableDatabase();
+                copyDataBase();
+            }
+
+        }
+
+
+        // Check if the database already exist to avoid re-copying the file each time the
+        // application is started
+        private boolean checkDataBase(){
+
+            SQLiteDatabase checkDB = null;
+
+            try
+            {
+                String myPath = DB_PATH + DB_NAME;
+                checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+
+            }
+            catch(SQLiteException e)
+            {
+                //database does't exist yet.
+            }
+
+            if(checkDB != null){
+
+                checkDB.close();
+
+            }
+            return checkDB != null;
+        }
+
+        // Copies database from asset folder to the system folder. This is much faster than using
+        // the City of Surrey API.
+        private void copyDataBase() throws IOException{
+
+            // Open local DB as the input stream
+            InputStream myInput = myContext.getAssets().open(DB_NAME);
+
+            // Path to empty system DB
+            String outFileName = DB_PATH + DB_NAME;
+
+            // Open the empty DB as the output stream
+            OutputStream myOutput = new FileOutputStream(outFileName);
+
+            // Transfer bytes from the inputfile to the outputfile
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0)
+            {
+                System.err.println("COPYING DB");
+                myOutput.write(buffer, 0, length);
+            }
+
+            //Close the streams
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
         }
     }
 

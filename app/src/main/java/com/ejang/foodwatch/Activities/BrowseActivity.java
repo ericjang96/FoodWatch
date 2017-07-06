@@ -1,19 +1,22 @@
-package com.ejang.restaurantwatch.Activities;
+package com.ejang.foodwatch.Activities;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.AlertDialog;
-import android.widget.AbsListView;
-import android.widget.FrameLayout;
-import android.view.View;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AbsListView;
+import android.widget.FrameLayout;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -22,15 +25,18 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.arlib.floatingsearchview.FloatingSearchView;
-import com.ejang.restaurantwatch.AsyncTasks.DownloadFromWeb;
-import com.ejang.restaurantwatch.AsyncTasks.LoadFromDB;
-import com.ejang.restaurantwatch.BuildConfig;
-import com.ejang.restaurantwatch.Utils.FilterType;
-import com.ejang.restaurantwatch.Utils.InspectionResult;
-import com.ejang.restaurantwatch.R;
-import com.ejang.restaurantwatch.Utils.Restaurant;
-import com.ejang.restaurantwatch.Views.RestaurantListAdapter;
+import com.ejang.foodwatch.AsyncTasks.DownloadFromWeb;
+import com.ejang.foodwatch.AsyncTasks.LoadFromDB;
+import com.ejang.foodwatch.BuildConfig;
+import com.ejang.foodwatch.R;
+import com.ejang.foodwatch.Utils.InspectionResult;
+import com.ejang.foodwatch.Utils.Restaurant;
+import com.ejang.foodwatch.Views.RestaurantListAdapter;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.PlaceBuffer;
+import com.google.android.gms.location.places.Places;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -42,9 +48,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import android.content.Intent;
-import android.widget.TextView;
 
 public class BrowseActivity extends BaseActivity {
 
@@ -66,6 +69,18 @@ public class BrowseActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        // Prevents another activity from being started if another instance of it is already running.
+        if (!isTaskRoot())
+        {
+            final Intent intent = getIntent();
+            if (intent.hasCategory(Intent.CATEGORY_LAUNCHER) && Intent.ACTION_MAIN.equals(intent.getAction())) {
+                System.err.println("Main Activity is not the root.  Finishing Main Activity instead of launching.");
+                finish();
+                return;
+            }
+        }
+
         super.onCreate(savedInstanceState);
 
         // Get a database that has read/write access to for this activity. Get the shared pref for
@@ -73,8 +88,11 @@ public class BrowseActivity extends BaseActivity {
         writeableDB = dbHelper.getWritableDatabase();
         sharedPref = this.getPreferences(this.MODE_PRIVATE);
 
-        // TODO: instead of initializing this to false every time, make a sharedPreference entry for lat and long. If those fields exist, then locationSet will be true.
+        // This is not a useful variable at the moment, but keeping it around just in case I need
+        // to use it again in the future.
         locationSet = new AtomicBoolean(false);
+
+        // TODO: I might want to split this into 2 variables because the data could be busy, but the adapter could be free.
         dataAndAdapterAvailable = new AtomicBoolean(true);
         // For now, this field is just for testing purposes.
         listViewInitialized = false;
@@ -108,13 +126,7 @@ public class BrowseActivity extends BaseActivity {
             }
         });
 
-        // This will always be true at the moment, but that won't be the case later on. locationSet won't
-        // always be initialized to false inside onCreate. Instead, we will check for the value in sharedPreferences
-        if (!locationSet.get())
-        {
-            findViewById(R.id.no_location_selected_layout).setVisibility(View.VISIBLE);
-        }
-
+        setInitialLocation();
         initializeAllRestaurants();
     }
 
@@ -124,7 +136,7 @@ public class BrowseActivity extends BaseActivity {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START))
         {
-            drawer.closeDrawer(GravityCompat.START);
+            this.moveTaskToBack(true);
         }
         else
         {
@@ -159,43 +171,78 @@ public class BrowseActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // This method is the entry point for populating the ListView of restaurants. It decides whether
-    // the data should be fetched from the City of Surrey web API or from the local SQLite DB based
-    // on the previous update time from the API. If it was more than a week ago, it uses the API.
+    // Sets the initial location to use on startup of the app. If there is info from the previous
+    // location in sharedPref, use it. If not, use the City of Surrey as the default location.
+    private void setInitialLocation() {
+        String savedLocationID = sharedPref.getString(getString(R.string.last_saved_location_id), "");
+        String locationID;
+
+        if (savedLocationID.length() <= 0)
+        {
+            locationID = getString(R.string.surrey_city_hall_google_id);
+        }
+        else
+        {
+            locationID = savedLocationID;
+        }
+        GoogleApiClient.Builder builder = new GoogleApiClient.Builder(this).addApi(Places.GEO_DATA_API);
+        final GoogleApiClient client = builder.build();
+        client.connect();
+        Places.GeoDataApi.getPlaceById(client, locationID).setResultCallback(new ResultCallback<PlaceBuffer>() {
+            @Override
+            public void onResult(PlaceBuffer places)
+            {
+                Place surreyCityHall = places.get(0);
+                userLat = surreyCityHall.getLatLng().latitude;
+                userLong = surreyCityHall.getLatLng().longitude;
+                setLocationCaption(surreyCityHall);
+                locationSet.set(true);
+                places.release();
+                client.disconnect();
+            }
+        });
+
+        findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
+    }
+
+    // This method is the entry point for populating the ListView of restaurants. If the DB copyover
+    // failed, it makes a HTTP request to the City of Surrey API. This is the worst case scenario,
+    // and will take around 1 minute to do the initial fetching/processing. If DB copy is successful,
+    // the method quickly populate the adapter and listview. Then we check for updates regularly in
+    // the background so the UI thread isn't affected.
     public void initializeAllRestaurants() {
         // Initialize empty hashmap and array that will hold the inspection and restaurant data.
         inspectionData = new HashMap<>();
         allRestaurants = new ArrayList<>();
         restaurantListAdapter = null;
         restaurantList = null;
-        String lastRefreshTime = getString(R.string.last_refresh_time);
 
         // Make loading icon visible
         if (locationSet.get())
         {
-            findViewById(R.id.no_location_selected_layout).setVisibility(View.GONE);
             findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         }
 
-        long lastRefreshedAt = sharedPref.getLong(lastRefreshTime, -1);
-
-        // This is the case where the app has been installed for the first time, or the shared pref
-        // file does not exist.
-        if (lastRefreshedAt == -1)
-        {
-            downloadRestaurantsAndInspections(false);
-        }
-        else
+        if (dbCopySuccess)
         {
             // Start an async task to load restaurant and inspection data from the SQLite DB. Even
             // if this data is more than a week old, load something first and update the data in the
             // background so the user has something to see.
             new LoadFromDB(BrowseActivity.this).execute(writeableDB);
         }
+        else
+        {
+            // If DB copy was unsuccessful, download everything from City of Surrey API.
+            downloadRestaurantsAndInspections(false);
+        }
     }
 
     private void downloadRestaurantsAndInspections(final Boolean updateQuietly)
     {
+        if (!updateQuietly)
+        {
+            findViewById(R.id.init_bubble).setVisibility(View.VISIBLE);
+        }
         // Set up a request to get all inspection data. When response is returned, it starts
         // an async task to organize this data.
         String url = getString(R.string.url_all_inspections);
@@ -221,6 +268,41 @@ public class BrowseActivity extends BaseActivity {
         System.err.println("Called first http at: " + System.currentTimeMillis());
     }
 
+    public void initializeListView()
+    {
+        // Use a copy of allRestaurants to initialize the adapter because allRestaurants is going
+        // to be reused. Otherwise, when I modify allRestaurants, it will change the adapter as well
+        // because there is a reference to the array I initialized with.
+        ArrayList<Restaurant> allRestaurantsCopy = new ArrayList<>(allRestaurants);
+
+        restaurantListAdapter = new RestaurantListAdapter(BrowseActivity.this, allRestaurantsCopy);
+        restaurantList = (ListView) findViewById(R.id.restaurant_listview);
+        restaurantList.setAdapter(restaurantListAdapter);
+        restaurantList.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState == SCROLL_STATE_FLING) {
+                    locationFab.hide();
+                }
+                else
+                {
+                    locationFab.show();
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+            }
+        });
+        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+        System.err.println("Set adapter at: " + System.currentTimeMillis());
+
+        initializeSearchBar();
+        listViewInitialized = true;
+        dataAndAdapterAvailable.set(true);
+    }
+
     public void initializeSearchBar()
     {
         // Initialize the search bar functionality. If user input text into the bar before the
@@ -239,13 +321,16 @@ public class BrowseActivity extends BaseActivity {
                 BrowseActivity.this.restaurantListAdapter.getFilter().filter(newQuery);
             }
         });
+        findViewById(R.id.init_bubble).setVisibility(View.GONE);
+        findViewById(R.id.anchor).setVisibility(View.GONE);
     }
 
+    // Method called when user selects location with Google Places API.
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
         if (requestCode == 1) {
             if (resultCode == RESULT_OK) {
-                findViewById(R.id.no_location_selected_layout).setVisibility(View.GONE);
+//                findViewById(R.id.no_location_selected_layout).setVisibility(View.GONE);
                 findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
                 Place place = PlacePicker.getPlace(data, this);
                 LatLng latlng = place.getLatLng();
@@ -253,25 +338,8 @@ public class BrowseActivity extends BaseActivity {
                 userLong = latlng.longitude;
                 locationSet.set(true);
 
-                TextView location = (TextView) findViewById(R.id.listview_caption);
-
-                String placeName = String.valueOf(place.getName());
-                // If name isn't a coordinate, use the name.
-                if (!placeName.contains("°") && !placeName.contains("\""))
-                {
-                    location.setText("Restaurants Near " + place.getName());
-                }
-                // Next best choice is an address if there is one.
-                else if (place.getAddress().length() > 0)
-                {
-                    location.setText("Restaurants Near " + place.getAddress());
-                }
-                // last resort is the coordinates.
-                else
-                {
-                    location.setText("Restaurants Near " + place.getName());
-                }
-
+                sharedPref.edit().putString(getString(R.string.last_saved_location_id), place.getId()).commit();
+                setLocationCaption(place);
                 reorderResults();
             }
         }
@@ -295,27 +363,50 @@ public class BrowseActivity extends BaseActivity {
         }
     }
 
+    // Helper to set the location caption above the ListView.
+    private void setLocationCaption(Place place)
+    {
+        TextView location = (TextView) findViewById(R.id.listview_caption);
+
+        String placeName = String.valueOf(place.getName());
+        // If name isn't a coordinate, use the name.
+        if (!placeName.contains("°") && !placeName.contains("\""))
+        {
+            location.setText("Restaurants Near " + place.getName());
+        }
+        // Next best choice is an address if there is one.
+        else if (place.getAddress().length() > 0)
+        {
+            location.setText("Restaurants Near " + place.getAddress());
+        }
+        // last resort is the coordinates.
+        else
+        {
+            location.setText("Restaurants Near " + place.getName());
+        }
+    }
+
+    // String array for alert dialog multi choice items
+    String[] safetyRatings = new String[]{
+            "Safe",
+            "Moderate",
+            "Unsafe",
+            "Unknown"
+    };
+
+    // Boolean array for initial selected items
+    final boolean[] checkedSafetyRatings = new boolean[]{
+            true, // Safe
+            true, // Moderate
+            true, // Unsafe
+            true // Unknown
+    };
+
     // Helper for bringing up the multiple-choice filter dialog when "Filter Search" action is clicked.
     private void showFilterDialog()
     {
         // Build an AlertDialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        // String array for alert dialog multi choice items
-        String[] safetyRatings = new String[]{
-                "Safe",
-                "Moderate",
-                "Unsafe",
-                "Unknown"
-        };
-
-        // Boolean array for initial selected items
-        final boolean[] checkedSafetyRatings = new boolean[]{
-                true, // Safe
-                true, // Moderate
-                true, // Unsafe
-                true // Unknown
-        };
 
         // Set multiple choice items for alert dialog
         builder.setMultiChoiceItems(safetyRatings, checkedSafetyRatings, new DialogInterface.OnMultiChoiceClickListener() {
@@ -363,106 +454,55 @@ public class BrowseActivity extends BaseActivity {
         dialog.show();
     }
 
-    public void initializeListView()
+    public void showRefreshDialog()
     {
-        // Use a copy of allRestaurants to initialize the adapter because allRestaurants is going
-        // to be reused. Otherwise, when I modify allRestaurants, it will change the adapter as well
-        // because there is a reference to the array I initialized with.
-        ArrayList<Restaurant> allRestaurantsCopy = new ArrayList<>(allRestaurants);
+        // Build an AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        restaurantListAdapter = new RestaurantListAdapter(BrowseActivity.this, allRestaurantsCopy);
-        restaurantList = (ListView) findViewById(R.id.restaurant_listview);
-        restaurantList.setAdapter(restaurantListAdapter);
-        restaurantList.setOnScrollListener(new AbsListView.OnScrollListener() {
+        // Specify the dialog is cancelable
+        builder.setCancelable(true);
+
+        // Set a title for alert dialog
+        builder.setTitle("Update Inspection Data");
+        builder.setMessage("Check for new data from the City of Surrey and update your restaurants?");
+
+        // Set the positive/yes button click listener
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-                if (scrollState == SCROLL_STATE_FLING) {
-                    locationFab.hide();
-                }
-                else
-                {
-                    locationFab.show();
-                }
-            }
+            public void onClick(DialogInterface dialog, int which) {
+                // Do something when click positive button
+                System.err.println("ADAPTER THREAD IS: " + Thread.currentThread().toString());
+                restaurantListAdapter.updateAdapterData(allRestaurants);
 
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                FloatingSearchView mSearchView = (FloatingSearchView) findViewById(R.id.restaurants_search);
+                mSearchView.clearQuery();
 
+                Toast toast = Toast.makeText(BrowseActivity.this, "Update was successful", Toast.LENGTH_LONG);
+                toast.show();
+                // initializeListView();
+                dataUpdateAvailable = false;
             }
         });
-        findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-        System.err.println("Set adapter at: " + System.currentTimeMillis());
 
-        initializeSearchBar();
-        listViewInitialized = true;
-        dataAndAdapterAvailable.set(true);
+
+        // Set the neutral/cancel button click listener
+        builder.setNegativeButton("Later", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dataUpdateAvailable = true;
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        // Display the alert dialog on interface
+        dialog.show();
     }
-
-    private boolean isTimeToUpdate(Long epochDate)
-    {
-         // 604800000 milliseconds = 1 week
-        if (BuildConfig.DEBUG)
-        {
-            return true;
-        }
-        else
-        {
-            return System.currentTimeMillis() - epochDate > 604800000;
-        }
-    }
-
-    public static Double getUserLat()
-    {
-        return userLat;
-    }
-
-    public static Double getUserLong()
-    {
-        return userLong;
-    }
-
-    public static void setUserLat(Double lat)
-    {
-        userLat = lat;
-    }
-
-    public static void setUserLong(Double longitude)
-    {
-        userLong = longitude;
-    }
-
-    public static SharedPreferences getSharedPref()
-    {
-        return sharedPref;
-    }
-
-    public void setInspectionData(HashMap<String, ArrayList<InspectionResult>> inspections)
-    {
-        inspectionData.clear();
-        inspectionData.putAll(inspections);
-    }
-
-    public void setRestaurantData(ArrayList<Restaurant> restaurants)
-    {
-        allRestaurants.clear();
-        allRestaurants.addAll(restaurants);
-    }
-
-//    public void setDormantInspectionData(HashMap<String, ArrayList<InspectionResult>> inspections)
-//    {
-//        dormantInspectionData.clear();
-//        dormantInspectionData.putAll(inspections);
-//    }
-//
-//    public void setDormantRestaurantData(ArrayList<Restaurant> restaurants)
-//    {
-//        dormantAllRestaurants.clear();
-//        dormantAllRestaurants.addAll(restaurants);
-//    }
 
     private final ScheduledExecutorService scheduler =
             Executors.newScheduledThreadPool(1);
 
+    // Starts the ticker to check if an update is necessary. This ticker is started after the adapter
+    // and listview have been initialized on startup to avoid updating while the initial load is still happening.
     public void startUpdateChecker()
     {
         System.err.println("UI THREAD IS: " + Thread.currentThread().toString());
@@ -491,52 +531,53 @@ public class BrowseActivity extends BaseActivity {
         updateCheckerStarted = true;
     }
 
-    public void askToUpdateAdapter()
+    private boolean isTimeToUpdate(Long epochDate)
     {
-        if (allRestaurants.size() > 0)
+        // 604800000 milliseconds = 1 week
+        if (BuildConfig.DEBUG)
         {
-            showRefreshDialog();
+            return true;
+        }
+        else
+        {
+            return System.currentTimeMillis() - epochDate > 604800000;
         }
     }
 
-    public void showRefreshDialog()
+    public void setInspectionData(HashMap<String, ArrayList<InspectionResult>> inspections)
     {
-        // Build an AlertDialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        inspectionData.clear();
+        inspectionData.putAll(inspections);
+    }
 
-        // Specify the dialog is cancelable
-        builder.setCancelable(true);
+    public void setRestaurantData(ArrayList<Restaurant> restaurants)
+    {
+        allRestaurants.clear();
+        allRestaurants.addAll(restaurants);
+    }
 
-        // Set a title for alert dialog
-        builder.setTitle("Update Inspection Data");
-        builder.setMessage("Check for new data from the City of Surrey and update the your restaurant list?");
+    public static Double getUserLat()
+    {
+        return userLat;
+    }
 
-        // Set the positive/yes button click listener
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // Do something when click positive button
-                System.err.println("ADAPTER THREAD IS: " + Thread.currentThread().toString());
-                restaurantListAdapter.updateAdapterData(allRestaurants);
+    public static Double getUserLong()
+    {
+        return userLong;
+    }
 
-                FloatingSearchView mSearchView = (FloatingSearchView) findViewById(R.id.restaurants_search);
-                BrowseActivity.this.restaurantListAdapter.getFilter().filter(mSearchView.getQuery());
-                // initializeListView();
-                dataUpdateAvailable = false;
-            }
-        });
+    public static void setUserLat(Double lat)
+    {
+        userLat = lat;
+    }
 
+    public static void setUserLong(Double longitude)
+    {
+        userLong = longitude;
+    }
 
-        // Set the neutral/cancel button click listener
-        builder.setNeutralButton("Later", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dataUpdateAvailable = true;
-            }
-        });
-
-        AlertDialog dialog = builder.create();
-        // Display the alert dialog on interface
-        dialog.show();
+    public static SharedPreferences getSharedPref()
+    {
+        return sharedPref;
     }
 }

@@ -1,4 +1,4 @@
-package com.ejang.restaurantwatch.Activities;
+package com.ejang.foodwatch.Activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,8 +9,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import com.ejang.restaurantwatch.R;
-import com.ejang.restaurantwatch.SQLDB.DatabaseContract.DatabaseHelper;
+import com.ejang.foodwatch.R;
+import com.ejang.foodwatch.SQLDB.DatabaseContract.DatabaseHelper;
+
+import java.io.IOException;
 
 
 // TODO: Add another activity for restaurant details when listview item is clicked
@@ -27,6 +29,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
     Integer currentView;
     NavigationView navigationView;
     DatabaseHelper dbHelper;
+    boolean dbCopySuccess;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,20 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
         navigationView.setNavigationItemSelectedListener(this);
         // Set the database helper which will be used to access the DB
         dbHelper = new DatabaseHelper(this);
+
+        try
+        {
+            // Create a default DB with contents from the DB file in the assets folder. If already
+            // exists, does nothing.
+            dbHelper.createDefaultDB();
+            dbCopySuccess = true;
+        }
+        catch (IOException e)
+        {
+            // When the UI thread sees that the copy was unsuccessful, it will download from the web
+            // API instead of using the default DB.
+            dbCopySuccess = false;
+        }
     }
 
     @Override

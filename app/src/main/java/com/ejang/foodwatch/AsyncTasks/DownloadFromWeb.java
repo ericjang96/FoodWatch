@@ -1,4 +1,4 @@
-package com.ejang.restaurantwatch.AsyncTasks;
+package com.ejang.foodwatch.AsyncTasks;
 
 /**
  * Created by Eric on 2017-03-26.
@@ -6,7 +6,6 @@ package com.ejang.restaurantwatch.AsyncTasks;
 
 import android.content.ContentValues;
 import android.os.AsyncTask;
-import android.view.View;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -14,12 +13,12 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.ejang.restaurantwatch.Activities.BrowseActivity;
-import com.ejang.restaurantwatch.Utils.InspectionResult;
-import com.ejang.restaurantwatch.R;
-import com.ejang.restaurantwatch.Utils.Restaurant;
-import com.ejang.restaurantwatch.Views.RestaurantListAdapter;
-import com.ejang.restaurantwatch.SQLDB.DatabaseContract;
+import com.ejang.foodwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.R;
+import com.ejang.foodwatch.SQLDB.DatabaseContract;
+import com.ejang.foodwatch.Utils.InspectionResult;
+import com.ejang.foodwatch.Utils.Restaurant;
+import com.ejang.foodwatch.Views.RestaurantListAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,12 +59,6 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
             }
         }
         activity.dataAndAdapterAvailable.set(false);
-
-        if (updateQuietly){
-            System.err.println("CLEARING TABLES AND UDPATING QUIETLY");
-//            activity.writeableDB.execSQL(SQL_CLEAR_RES_TABLE);
-//            activity.writeableDB.execSQL(SQL_CLEAR_INSPECTION_TABLE);
-        }
 
         // Organize all of the data for setting up the adapter and listview.
         JSONObject response = params[0];
@@ -142,7 +135,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
 
         // This method is only called when a location is set, so make the "no location selected" text
         // invisible.
-        activity.findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
+        // activity.findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
 
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
@@ -193,7 +186,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                             }
                             else
                             {
-                                activity.askToUpdateAdapter();
+                                activity.showRefreshDialog();
                             }
                             if (!activity.updateCheckerStarted)
                             {

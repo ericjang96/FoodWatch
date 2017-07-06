@@ -1,13 +1,13 @@
-package com.ejang.restaurantwatch.AsyncTasks;
+package com.ejang.foodwatch.AsyncTasks;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 
-import com.ejang.restaurantwatch.Activities.BrowseActivity;
-import com.ejang.restaurantwatch.Utils.InspectionResult;
-import com.ejang.restaurantwatch.Utils.Restaurant;
-import com.ejang.restaurantwatch.SQLDB.DatabaseContract;
+import com.ejang.foodwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.SQLDB.DatabaseContract;
+import com.ejang.foodwatch.Utils.InspectionResult;
+import com.ejang.foodwatch.Utils.Restaurant;
 
 import java.util.ArrayList;
 import java.util.Collections;

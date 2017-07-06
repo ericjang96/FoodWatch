@@ -1,6 +1,6 @@
-package com.ejang.restaurantwatch.Utils;
+package com.ejang.foodwatch.Utils;
 
-import com.ejang.restaurantwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.Activities.BrowseActivity;
 
 import java.util.ArrayList;
 

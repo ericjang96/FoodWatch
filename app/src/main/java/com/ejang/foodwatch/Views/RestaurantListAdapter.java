@@ -1,4 +1,4 @@
-package com.ejang.restaurantwatch.Views;
+package com.ejang.foodwatch.Views;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,12 +7,11 @@ import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.TextView;
 
-import com.ejang.restaurantwatch.Activities.BrowseActivity;
-import com.ejang.restaurantwatch.R;
-import com.ejang.restaurantwatch.Utils.FilterType;
-import com.ejang.restaurantwatch.Utils.HazardRating;
-import com.ejang.restaurantwatch.Utils.InspectionResult;
-import com.ejang.restaurantwatch.Utils.Restaurant;
+import com.ejang.foodwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.R;
+import com.ejang.foodwatch.Utils.HazardRating;
+import com.ejang.foodwatch.Utils.InspectionResult;
+import com.ejang.foodwatch.Utils.Restaurant;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -95,7 +94,14 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         }
 
         ArrayList<InspectionResult> results = item.inspectionResults;
-        if (results != null || results.size() == 0)
+        if (results == null || results.size() == 0)
+        {
+            cleanliness.setText(context.getString(R.string.unknown_hazard));
+            cleanliness.setTextColor(context.getColor(R.color.greyFont));
+            numInspections.setText(context.getString(R.string.num_inspections, "Not available"));
+            lastInspectionDate.setText(context.getString(R.string.last_inspection_date, "Not available"));
+        }
+        else
         {
             numInspections.setText(context.getString(R.string.num_inspections, String.valueOf(results.size())));
 
@@ -103,11 +109,6 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
                 String date = dateFormat.format(results.get(0).inspectionDate);
                 lastInspectionDate.setText(context.getString(R.string.last_inspection_date, date));
             }
-        } else {
-            cleanliness.setText(context.getString(R.string.unknown_hazard));
-            cleanliness.setTextColor(context.getColor(R.color.greyFont));
-            numInspections.setText(context.getString(R.string.num_inspections, "Not available"));
-            lastInspectionDate.setText(context.getString(R.string.last_inspection_date, "Not available"));
         }
 
         distanceFromUser.setText(String.format(java.util.Locale.US,"%.1f", item.distanceFromUser / 1000) + " km");

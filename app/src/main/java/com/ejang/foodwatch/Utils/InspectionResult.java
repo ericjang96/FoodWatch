@@ -1,4 +1,4 @@
-package com.ejang.restaurantwatch.Utils;
+package com.ejang.foodwatch.Utils;
 
 import java.text.DateFormat;
 import java.text.ParseException;

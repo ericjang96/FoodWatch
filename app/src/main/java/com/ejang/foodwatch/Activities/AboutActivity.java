@@ -1,4 +1,4 @@
-package com.ejang.restaurantwatch.Activities;
+package com.ejang.foodwatch.Activities;
 
 import android.os.Bundle;
 import android.support.v4.view.GravityCompat;
@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-import com.ejang.restaurantwatch.R;
+import com.ejang.foodwatch.R;
 
 public class AboutActivity extends BaseActivity {
 

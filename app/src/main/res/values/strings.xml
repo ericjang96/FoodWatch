@@ -21,4 +21,7 @@
     <string name="last_inspection_date">Last inspection date: %1$s</string>
 
     <string name="last_refresh_time">last refresh time</string>
+    <string name="last_saved_location_id">location google id</string>
+
+    <string name="surrey_city_hall_google_id">ChIJKxKd9yrYhVQRbwajS39EVvM</string>
 </resources>

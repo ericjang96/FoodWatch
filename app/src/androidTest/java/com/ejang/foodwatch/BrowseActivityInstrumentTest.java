@@ -1,4 +1,4 @@
-package com.ejang.restaurantwatch;
+package com.ejang.foodwatch;
 
 
 import android.support.test.espresso.ViewInteraction;
@@ -8,7 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 
-import com.ejang.restaurantwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.Activities.BrowseActivity;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;

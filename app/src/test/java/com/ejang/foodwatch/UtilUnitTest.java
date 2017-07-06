@@ -1,13 +1,13 @@
-package com.ejang.restaurantwatch;
+package com.ejang.foodwatch;
 
-import com.ejang.restaurantwatch.Utils.InspectionResult;
-import com.ejang.restaurantwatch.Utils.Violation;
+import com.ejang.foodwatch.Utils.InspectionResult;
+import com.ejang.foodwatch.Utils.Violation;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Example local unit test, which will execute on the development machine (host).

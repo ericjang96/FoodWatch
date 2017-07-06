@@ -1,4 +1,4 @@
-package com.ejang.restaurantwatch.Utils;
+package com.ejang.foodwatch.Utils;
 
 /**
  * Created by Eric on 2017-06-23.
