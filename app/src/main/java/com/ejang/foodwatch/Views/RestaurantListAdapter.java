@@ -8,6 +8,7 @@ import android.widget.Filter;
 import android.widget.TextView;
 
 import com.ejang.foodwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.Activities.RestaurantDetailActivity;
 import com.ejang.foodwatch.R;
 import com.ejang.foodwatch.Utils.HazardRating;
 import com.ejang.foodwatch.Utils.InspectionResult;
@@ -54,12 +55,11 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
             rowView = view;
         }
 
-        // Get each view from the TrafficEvent ListView
+        // Get each view from the Restaurant ListView
         TextView nameView = (TextView) rowView.findViewById(R.id.restaurant_name);
         TextView locationView = (TextView) rowView.findViewById(R.id.restaurant_location);
         TextView cleanliness = (TextView) rowView.findViewById(R.id.hazard_level);
         TextView numInspections = (TextView) rowView.findViewById(R.id.num_inspections);
-        TextView lastInspectionDate = (TextView) rowView.findViewById(R.id.last_inspection_date);
         TextView distanceFromUser = (TextView) rowView.findViewById(R.id.distance_from_location);
 
         Restaurant item = getItem(position);
@@ -67,8 +67,6 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         // Set the values for each view
         nameView.setText(item.name);
         locationView.setText(item.address);
-
-        DateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy");
 
         HazardRating hazard = item.mostRecentSafety;
 
@@ -99,22 +97,27 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
             cleanliness.setText(context.getString(R.string.unknown_hazard));
             cleanliness.setTextColor(context.getColor(R.color.greyFont));
             numInspections.setText(context.getString(R.string.num_inspections, "Not available"));
-            lastInspectionDate.setText(context.getString(R.string.last_inspection_date, "Not available"));
         }
         else
         {
             numInspections.setText(context.getString(R.string.num_inspections, String.valueOf(results.size())));
-
-            if (lastInspectionDate != null) {
-                String date = dateFormat.format(results.get(0).inspectionDate);
-                lastInspectionDate.setText(context.getString(R.string.last_inspection_date, date));
-            }
         }
 
-        distanceFromUser.setText(String.format(java.util.Locale.US,"%.1f", item.distanceFromUser / 1000) + " km");
-
+        distanceFromUser.setText(getReadableDist(item.distanceFromUser));
         return rowView;
 
+    }
+
+    public static String getReadableDist(Float distance)
+    {
+        if (distance >= 1000)
+        {
+            return String.format(java.util.Locale.US,"%.1f", distance / 1000) + " km";
+        }
+        else
+        {
+            return String.format(java.util.Locale.US, "%.0f", distance) + " m";
+        }
     }
 
     @Override

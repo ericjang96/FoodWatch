@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.ejang.foodwatch.Activities.RestaurantDetailActivity"
+    tools:showIn="@layout/activity_restaurant_detail">
+
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:orientation="vertical">-->
+        <!--<ImageView-->
+            <!--android:layout_height="20dp"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:background="@color/colorHighHazard"-->
+            <!--android:layout_column="1"/>-->
+
+        <!--<ImageView-->
+            <!--android:layout_height="20dp"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:background="@color/colorLowHazard"-->
+            <!--android:layout_column="2"/>-->
+    <!--</LinearLayout>-->
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!--<TableRow>-->
+            <!--<TextView-->
+                <!--android:id="@+id/listview_caption"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:paddingTop="5dp"-->
+                <!--android:paddingBottom="5dp"-->
+                <!--android:paddingLeft="40dp"-->
+                <!--android:paddingRight="40dp"-->
+                <!--android:text="Restaurant Details"-->
+                <!--android:textSize="16sp"-->
+                <!--android:background="@color/colorSecondary"-->
+                <!--android:textColor="@color/colorWhite"-->
+                <!--android:ellipsize="end"-->
+                <!--android:maxLines="1"-->
+                <!--android:gravity="center"-->
+                <!--android:layout_column="1"-->
+                <!--android:layout_weight="1"/>-->
+        <!--</TableRow>-->
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorWhite">
+            <ImageView
+                android:layout_height="50dp"
+                android:layout_width="0dp"
+                android:src="@mipmap/ic_place"
+                android:layout_gravity="center"
+                android:layout_column="1"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/restaurant_address_text"
+                android:layout_height="50dp"
+                android:layout_width="0dp"
+                android:textColor="@color/blackFont"
+                android:text="Address"
+                android:textSize="16dp"
+                android:padding="5dp"
+                android:gravity="center_vertical"
+                android:layout_column="2"
+                android:layout_weight="7"/>
+        </TableRow>
+
+        <View
+            android:layout_height="2sp"
+            android:background="@color/transparent"
+            />
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorWhite">
+            <ImageView
+                android:layout_height="50dp"
+                android:layout_width="0dp"
+                android:src="@mipmap/ic_safety"
+                android:layout_gravity="center"
+                android:layout_column="1"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/restaurant_hazard_text"
+                android:layout_height="50dp"
+                android:layout_width="0dp"
+                android:textColor="@color/blackFont"
+                android:text="Safety"
+                android:textSize="16dp"
+                android:textStyle="bold"
+                android:gravity="center_vertical"
+                android:padding="5dp"
+                android:layout_column="2"
+                android:layout_weight="7"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <!--<ImageView-->
+                <!--android:layout_height="50dp"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:src="@mipmap/ic_inspections"-->
+                <!--android:layout_column="1"-->
+                <!--android:layout_weight="1"/>-->
+
+            <!--<TextView-->
+                <!--android:layout_height="50dp"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:textColor="@color/blackFont"-->
+                <!--android:text="Number of inspections"-->
+                <!--android:textSize="16dp"-->
+                <!--android:padding="5dp"-->
+                <!--android:gravity="center_vertical"-->
+                <!--android:layout_column="3"-->
+                <!--android:layout_weight="7"/>-->
+
+            <TextView
+            android:id="@+id/listview_caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:paddingLeft="40dp"
+            android:paddingRight="40dp"
+            android:text="Inspection History"
+            android:textSize="18sp"
+            android:background="@color/colorSecondary"
+            android:textColor="@color/colorWhite"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:gravity="center"
+            android:layout_column="1"
+            android:layout_weight="1"/>
+            <!--<ExpandableListView-->
+                <!--android:id="@+id/expandable_inspections"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_column="1"-->
+                <!--android:layout_weight="1"/>-->
+        </TableRow>
+
+        <TableRow>
+            <LinearLayout
+                android:orientation="vertical"
+                android:id="@+id/inspection_linear_layout"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_column="1"
+                android:layout_weight="1">
+            </LinearLayout>
+        </TableRow>
+
+    </TableLayout>
+
+</android.support.v4.widget.NestedScrollView>

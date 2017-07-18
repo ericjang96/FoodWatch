@@ -155,7 +155,7 @@ public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
             // This loop ensures that the inspections for the same key (trackingID) are organized by the date. Most recent inspection is last in the array.
             for (int i = 0 ; i < initialSize ; i++)
             {
-                if(inspections.get(i).inspectionDate.after(inspection.inspectionDate))
+                if(inspections.get(i).inspectionDate.before(inspection.inspectionDate))
                 {
                     inspections.add(i, inspection);
                     addedInspection = true;

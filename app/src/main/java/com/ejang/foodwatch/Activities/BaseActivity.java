@@ -1,18 +1,28 @@
 package com.ejang.foodwatch.Activities;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
+import com.android.volley.NoConnectionError;
+import com.android.volley.TimeoutError;
+import com.android.volley.VolleyError;
 import com.ejang.foodwatch.R;
 import com.ejang.foodwatch.SQLDB.DatabaseContract.DatabaseHelper;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+
+import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 
 
 // TODO: Add another activity for restaurant details when listview item is clicked
@@ -80,6 +90,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
                 if (currentView == null || currentView != R.id.nav_restaurant)
                 {
                     Intent anIntent = new Intent(getApplicationContext(), BrowseActivity.class);
+                    anIntent.addFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
                     startActivity(anIntent);
                 }
                 drawerLayout.closeDrawers();
@@ -88,6 +99,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
                 if (currentView == null || currentView != R.id.nav_about)
                 {
                     Intent anIntent = new Intent(getApplicationContext(), AboutActivity.class);
+                    anIntent.addFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
                     startActivity(anIntent);
                 }
                 drawerLayout.closeDrawers();
@@ -103,6 +115,63 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
     {
         dbHelper.close();
         super.onDestroy();
+    }
+
+    // Helper for handling all Volley errors.
+    public void handleVolleyError(VolleyError error)
+    {
+        // Build an AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        // Specify the dialog is cancelable
+        builder.setCancelable(true);
+
+        // Set a title for alert dialog
+        builder.setTitle("Network Error");
+
+        if (error instanceof TimeoutError || error instanceof NoConnectionError)
+        {
+            builder.setMessage("There was a network error while communicating with the City of Surrey Website. Please make sure your internet works, and try restarting the app.");
+        }
+        else
+        {
+            builder.setMessage("Unexpected error occurred while communicating with the City of Surrey Website: " + trimErrorMessage(String.valueOf(error.networkResponse.data), "message"));
+        }
+        // Set the positive/yes button click listener
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        // Display the alert dialog on interface
+        dialog.show();
+    }
+
+    // Helper to extract and trim the error message.
+    public static String trimErrorMessage(String json, String key)
+    {
+        String trimmedString;
+        try
+        {
+            JSONObject obj = new JSONObject(json);
+            trimmedString = obj.getString(key);
+        }
+        catch(JSONException e)
+        {
+            e.printStackTrace();
+            // Hopefully it doesn't get to this point ever.
+            trimmedString = "Unknown network error";
+        }
+        if (trimmedString == null || trimmedString.length() == 0)
+        {
+            trimmedString = "Unknown network error";
+        }
+
+        return trimmedString;
+
     }
 
     public void setCurrentNavView(Integer layout)

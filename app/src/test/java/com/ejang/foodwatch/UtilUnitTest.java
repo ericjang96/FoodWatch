@@ -1,5 +1,6 @@
 package com.ejang.foodwatch;
 
+import com.ejang.foodwatch.Activities.BaseActivity;
 import com.ejang.foodwatch.Utils.InspectionResult;
 import com.ejang.foodwatch.Utils.Violation;
 
@@ -62,5 +63,17 @@ public class UtilUnitTest {
 
         ArrayList<Violation> violations = InspectionResult.organizeViolationsLump(lump);
         assertEquals(0, violations.size());
+    }
+
+    @Test
+    public void testVolleyErrorParse()
+    {
+        String trimmedError = BaseActivity.trimErrorMessage("{\n" +
+                "    \"status\": 403,\n" +
+                "    \"message\": \"This is a sample volley error\"\n" +
+                "}", "message");
+
+        assertEquals("This is a sample volley error", trimmedError);
+
     }
 }

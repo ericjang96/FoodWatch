@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.ejang.foodwatch.Activities.RestaurantDetailActivity">
+    <item
+        android:id="@+id/action_fave"
+        android:title="@string/action_fave"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_action_fave_border"/>
+</menu>

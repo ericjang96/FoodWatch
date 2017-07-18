@@ -13,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -53,7 +54,7 @@ public class BrowseActivity extends BaseActivity {
 
     public RestaurantListAdapter restaurantListAdapter;
     public ListView restaurantList;
-    public HashMap<String, ArrayList<InspectionResult>> inspectionData;
+    public static HashMap<String, ArrayList<InspectionResult>> inspectionData;
     public ArrayList<Restaurant> allRestaurants;
     public static volatile AtomicBoolean locationSet;
     public static volatile AtomicBoolean dataAndAdapterAvailable;
@@ -66,6 +67,9 @@ public class BrowseActivity extends BaseActivity {
     private static Double userLong;
     private FloatingActionButton locationFab;
     private Boolean dataUpdateAvailable;
+
+    // This is for testing purposes ONLY to force HTTP connections for testing Volley tasks.
+    private Boolean forceWebDownload = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -223,6 +227,16 @@ public class BrowseActivity extends BaseActivity {
             findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         }
 
+        if (BuildConfig.DEBUG)
+        {
+            // For the purpose of testing Volley. Force a download from Surrey website and return
+            if (forceWebDownload)
+            {
+                downloadRestaurantsAndInspections(false);
+                return;
+            }
+        }
+
         if (dbCopySuccess)
         {
             // Start an async task to load restaurant and inspection data from the SQLite DB. Even
@@ -260,6 +274,7 @@ public class BrowseActivity extends BaseActivity {
             public void onErrorResponse(VolleyError error) {
                 System.err.println("That didn't work! here is the stacktrace: ");
                 error.printStackTrace();
+                handleVolleyError(error);
 
             }
         });
@@ -293,6 +308,22 @@ public class BrowseActivity extends BaseActivity {
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
 
+            }
+        });
+        restaurantList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(BrowseActivity.this, RestaurantDetailActivity.class);
+                Restaurant resturant = (Restaurant) parent.getItemAtPosition(position);
+
+                // Put all the information that the RestaurantDetailActivity will need in the intent before starting.
+                intent.putExtra(getString(R.string.intent_extra_restaurant_lat), resturant.latitude);
+                intent.putExtra(getString(R.string.intent_extra_restaurant_long), resturant.longitude);
+                intent.putExtra(getString(R.string.intent_extra_restaurant_name), resturant.name);
+                intent.putExtra(getString(R.string.intent_extra_restaurant_address), resturant.address);
+                intent.putExtra(getString(R.string.intent_extra_restaurant_hazard), resturant.mostRecentSafety);
+                intent.putExtra(getString(R.string.intent_extra_restaurant_ID), resturant.trackingID);
+                startActivity(intent);
             }
         });
         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
@@ -579,5 +610,11 @@ public class BrowseActivity extends BaseActivity {
     public static SharedPreferences getSharedPref()
     {
         return sharedPref;
+    }
+
+    // For testing purposes only.
+    private void setForceWebDownload(Boolean forceDownload)
+    {
+        forceWebDownload = forceDownload;
     }
 }

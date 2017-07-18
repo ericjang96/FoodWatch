@@ -86,8 +86,9 @@
                 android:id="@+id/restaurant_listview"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@color/colorGreyBackground"
                 android:divider="@color/colorGreyBackground"
-                android:dividerHeight="3.0sp" />
+                android:dividerHeight="2.0sp" />
 
             <RelativeLayout
                 android:id="@+id/loadingPanel"
@@ -147,7 +148,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="16dp"
         android:layout_marginRight="16dp"
-        android:backgroundTint="#FF6D00"
+        app:backgroundTint="#FF6D00"
         android:clickable="true"
         android:scaleType="center"
         android:src="@mipmap/ic_location_found"

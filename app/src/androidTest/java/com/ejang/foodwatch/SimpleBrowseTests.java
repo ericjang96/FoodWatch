@@ -32,7 +32,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anything;
 
 @RunWith(AndroidJUnit4.class)
-public class BrowseActivityInstrumentTest {
+public class SimpleBrowseTests {
 
     @Rule
     public ActivityTestRule<BrowseActivity> mActivityTestRule = new ActivityTestRule<>(BrowseActivity.class);

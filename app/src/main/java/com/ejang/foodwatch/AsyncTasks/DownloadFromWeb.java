@@ -7,9 +7,11 @@ package com.ejang.foodwatch.AsyncTasks;
 import android.content.ContentValues;
 import android.os.AsyncTask;
 
+import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
@@ -203,7 +205,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
             public void onErrorResponse(VolleyError error) {
                 System.err.println("That didn't work! here is the stacktrace: ");
                 error.printStackTrace();
-
+                activity.handleVolleyError(error);
             }
         });
 
@@ -236,7 +238,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
             // This loop ensures that the inspections for the same key (trackingID) are organized by the date. Most recent inspection is last in the array.
             for (int i = 0 ; i < initialSize ; i++)
             {
-                if(inspections.get(i).inspectionDate.after(inspection.inspectionDate))
+                if(inspections.get(i).inspectionDate.before(inspection.inspectionDate))
                 {
                     inspections.add(i, inspection);
                     addedInspection = true;

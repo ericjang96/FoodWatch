@@ -12,9 +12,9 @@
     <color name="blackFont">#616161</color>
     <color name="greyFont">#999999</color>
 
-    <color name="colorHighHazard">#D50000</color>
-    <color name="colorModerateHazard">#FFAB00</color>
-    <color name="colorLowHazard">#00C853</color>
+    <color name="colorHighHazard">#EF5350</color>
+    <color name="colorModerateHazard">#FFA726</color>
+    <color name="colorLowHazard">#66BB6A</color>
 
     <color name="colorGreyBackground">#EEEEEE</color>
     <color name="colorGreyRippleLight">#E0E0E0</color>
