@@ -1,12 +1,12 @@
 # FoodWatch
 This is an Android app that lets users quickly browse and search restaurant health inspection histories for my hometown: Surrey, BC. It uses data from the City of Surrey website, and I plan to add more cities depending on the available APIs.
 
-How to try the app (Installs a release version of the app):
+### How to try the app (Installs a release version of the app):
 1. Pull to a local repository
 2. Move the file .../FoodWatch/app/app-release.apk to a physical device or Android emulator with API level 23 or higher
 3. Find the file on your device and tap it to install the app (you may need to modify security settings to allow installation of apk files from unknown sources.)
 
-How to build this project (Installs a debug version of the app):
+### How to build this project (Installs a debug version of the app):
 1. Pull to a local repository
 2. Open a command prompt in .../FoodWatch directory
 3. Connect a physical device or start an Android emulator with API level 23 or higher
