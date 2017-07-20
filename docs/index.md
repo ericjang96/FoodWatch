@@ -3,7 +3,7 @@ This is an Android app that lets users quickly browse and search restaurant heal
 
 <div class="center-vid">
   <video class="border-vid" src="app_demo_1.mp4" width="360" height="640" controls preload></video>
-  <video class="border-vid" src="app_demo_1.mp4" width="360" height="640" controls preload></video>
+<!--  <video class="border-vid" src="app_demo_1.mp4" width="360" height="640" controls preload></video> This is a placeholder for multiple videos in the future -->
 </div>
 
 ### How to try the app (Installs a release version of the app):
