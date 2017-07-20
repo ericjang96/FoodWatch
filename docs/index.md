@@ -1,6 +1,7 @@
 # FoodWatch
 This is an Android app that lets users quickly browse and search restaurant health inspection histories for my hometown: Surrey, BC. It uses data from the City of Surrey website, and I plan to add more cities depending on the available APIs.
 
+<script src="http://api.html5media.info/1.1.8/html5media.min.js"></script>
 <video src="app_demo_1.mp4" width="320" height="200" controls preload></video>
 
 ### How to try the app (Installs a release version of the app):
