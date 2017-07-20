@@ -2,7 +2,8 @@
 This is an Android app that lets users quickly browse and search restaurant health inspection histories for my hometown: Surrey, BC. It uses data from the City of Surrey website, and I plan to add more cities depending on the available APIs.
 
 <div class="center-vid">
-  <video src="app_demo_1.mp4" width="360" height="640" controls preload></video>
+  <video class="border-vid"> src="app_demo_1.mp4" width="360" height="640" controls preload></video>
+  <video class="border-vid"> src="app_demo_1.mp4" width="360" height="640" controls preload></video>
 </div>
 
 ### How to try the app (Installs a release version of the app):
