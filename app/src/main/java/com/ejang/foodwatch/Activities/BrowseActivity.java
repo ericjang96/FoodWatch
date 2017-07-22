@@ -52,6 +52,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BrowseActivity extends BaseActivity {
 
+    private static final String TAG = "BrowseActivity";
+
     public RestaurantListAdapter restaurantListAdapter;
     public ListView restaurantList;
     public static HashMap<String, ArrayList<InspectionResult>> inspectionData;
@@ -79,7 +81,8 @@ public class BrowseActivity extends BaseActivity {
         {
             final Intent intent = getIntent();
             if (intent.hasCategory(Intent.CATEGORY_LAUNCHER) && Intent.ACTION_MAIN.equals(intent.getAction())) {
-                System.err.println("Main Activity is not the root.  Finishing Main Activity instead of launching.");
+
+                logDebug(TAG, "Main Activity is not the root.  Finishing Main Activity instead of launching.", null);
                 finish();
                 return;
             }
@@ -272,15 +275,13 @@ public class BrowseActivity extends BaseActivity {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                System.err.println("That didn't work! here is the stacktrace: ");
-                error.printStackTrace();
-                handleVolleyError(error);
+                logDebug(TAG, "Volley for inspection data failed", error);
 
             }
         });
 
         queue.add(jsonRequest);
-        System.err.println("Called first http at: " + System.currentTimeMillis());
+        logDebug(TAG, "Inspection data request queued at: " + System.currentTimeMillis(), null);
     }
 
     public void initializeListView()
@@ -327,7 +328,7 @@ public class BrowseActivity extends BaseActivity {
             }
         });
         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-        System.err.println("Set adapter at: " + System.currentTimeMillis());
+        logDebug(TAG, "Set adapter at: " + System.currentTimeMillis(), null);
 
         initializeSearchBar();
         listViewInitialized = true;
@@ -460,7 +461,6 @@ public class BrowseActivity extends BaseActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // Do something when click positive button
-                System.err.println("FILTER BY SAFETY: " + String.valueOf(checkedSafetyRatings[2]));
                 restaurantListAdapter.getFilter().setIncludeSafe(checkedSafetyRatings[0]);
                 restaurantListAdapter.getFilter().setIncludeModerate(checkedSafetyRatings[1]);
                 restaurantListAdapter.getFilter().setIncludeUnsafe(checkedSafetyRatings[2]);
@@ -502,7 +502,6 @@ public class BrowseActivity extends BaseActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // Do something when click positive button
-                System.err.println("ADAPTER THREAD IS: " + Thread.currentThread().toString());
                 restaurantListAdapter.updateAdapterData(allRestaurants);
 
                 FloatingSearchView mSearchView = (FloatingSearchView) findViewById(R.id.restaurants_search);
@@ -536,7 +535,6 @@ public class BrowseActivity extends BaseActivity {
     // and listview have been initialized on startup to avoid updating while the initial load is still happening.
     public void startUpdateChecker()
     {
-        System.err.println("UI THREAD IS: " + Thread.currentThread().toString());
         final Runnable updateChecker = new Runnable() {
             public void run()
             {
@@ -546,7 +544,7 @@ public class BrowseActivity extends BaseActivity {
                 }
                 else if (isTimeToUpdate(System.currentTimeMillis()) && dataAndAdapterAvailable.get())
                 {
-                    System.err.println("QUIET UPDATE STARTED");
+                    logDebug(TAG, "background HTTP update started", null);
                     downloadRestaurantsAndInspections(true);
                 }
             }

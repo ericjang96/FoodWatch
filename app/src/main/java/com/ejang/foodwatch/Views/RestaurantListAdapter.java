@@ -130,9 +130,7 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
     // the restaurants ordered by distance from the newly set location.
     public void updateDistancesFromUser()
     {
-        System.err.println("INSIDE UPDATE DISTANCES");
         // Iterate through all Restaurants and update their distances from user's chosen location
-        System.err.println("THIS COUNT IS: " + this.getCount());
         for (int i=0 ; i < allOriginalRestaurants.size() ; i++)
         {
             allOriginalRestaurants.get(i).updateDistanceFromUser();
@@ -170,7 +168,6 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         protected FilterResults performFiltering(CharSequence constraint) {
 
             FilterResults results = new FilterResults();
-            System.err.println("tryna filter dawg");
             if (constraint == null)
             {
                 // No constraint given, so nothing to change in the original array.
@@ -196,7 +193,6 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
                 results.values = filteredRestaurants;
                 results.count = filteredRestaurants.size();
             }
-            System.err.println("finished filter dawg");
             return results;
         }
 

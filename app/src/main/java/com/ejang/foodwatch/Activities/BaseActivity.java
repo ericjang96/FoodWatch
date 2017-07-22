@@ -9,11 +9,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 
 import com.android.volley.NoConnectionError;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
+import com.ejang.foodwatch.BuildConfig;
 import com.ejang.foodwatch.R;
 import com.ejang.foodwatch.SQLDB.DatabaseContract.DatabaseHelper;
 
@@ -177,5 +179,20 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
     public void setCurrentNavView(Integer layout)
     {
         currentView = layout;
+    }
+
+    public static void logDebug(String tag, String message, Throwable error)
+    {
+        if (BuildConfig.DEBUG)
+        {
+            if (error != null)
+            {
+                Log.d(tag, message, error);
+            }
+            else
+            {
+                Log.d(tag, message);
+            }
+        }
     }
 }

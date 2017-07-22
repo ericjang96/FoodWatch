@@ -48,6 +48,31 @@
                 <!--android:layout_column="1"-->
                 <!--android:layout_weight="1"/>-->
         <!--</TableRow>-->
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorWhite">
+            <ImageView
+                android:layout_height="50dp"
+                android:layout_width="0dp"
+                android:src="@mipmap/ic_restaurant_name"
+                android:layout_gravity="center"
+                android:layout_column="1"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/restaurant_name_text"
+                android:layout_height="50dp"
+                android:layout_width="0dp"
+                android:textColor="@color/blackFont"
+                android:text="Name"
+                android:textSize="16dp"
+                android:ellipsize="marquee"
+                android:padding="5dp"
+                android:gravity="center_vertical"
+                android:layout_column="2"
+                android:layout_weight="7"/>
+        </TableRow>
 
         <TableRow
             android:layout_width="match_parent"

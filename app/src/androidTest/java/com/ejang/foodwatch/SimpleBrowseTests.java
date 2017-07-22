@@ -14,6 +14,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.hamcrest.core.IsInstanceOf;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,6 +37,13 @@ public class SimpleBrowseTests {
 
     @Rule
     public ActivityTestRule<BrowseActivity> mActivityTestRule = new ActivityTestRule<>(BrowseActivity.class);
+
+    // Seems to work as a workaround for https://issuetracker.google.com/issues/37082857
+    // Not sure why..
+    @After
+    public void after() throws InterruptedException {
+        Thread.sleep(3000);
+    }
 
     @Before
     public void setExampleLocation()
@@ -90,6 +98,7 @@ public class SimpleBrowseTests {
         editText.check(matches(withText("red robin")));
 
     }
+
 
     private static Matcher<View> childAtPosition(
             final Matcher<View> parentMatcher, final int position) {

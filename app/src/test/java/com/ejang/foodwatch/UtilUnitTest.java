@@ -76,4 +76,7 @@ public class UtilUnitTest {
         assertEquals("This is a sample volley error", trimmedError);
 
     }
+
+
+    //TODO: getReadableDistTest
 }

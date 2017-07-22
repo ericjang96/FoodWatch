@@ -15,6 +15,7 @@ import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.ejang.foodwatch.Activities.BaseActivity;
 import com.ejang.foodwatch.Activities.BrowseActivity;
 import com.ejang.foodwatch.R;
 import com.ejang.foodwatch.SQLDB.DatabaseContract;
@@ -34,6 +35,8 @@ import java.util.HashMap;
 // Asynchronous task for downloading and processing JSON object from the City of Surrey web API.
 public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantListAdapter>
 {
+    private static final String TAG = "DownloadFromWeb";
+
     private BrowseActivity activity;
     private Boolean updateQuietly;
     private HashMap<String, ArrayList<InspectionResult>> inspectionDataToReturn;
@@ -51,7 +54,6 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
     @Override
     protected RestaurantListAdapter doInBackground(JSONObject... params) {
 
-        System.err.println("update quietly: " + updateQuietly.toString() + "  available: " + String.valueOf(activity.dataAndAdapterAvailable.get()));
         while (!activity.dataAndAdapterAvailable.get())
         {
             try {
@@ -87,8 +89,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
             // activity.writeableDB.execSQL(SQL_JOIN_TEMP_INSPECTION_TABLE_TO_REAL);
             activity.setInspectionData(inspectionDataToReturn);
 
-
-            System.err.println("Finished first loop at: " + System.currentTimeMillis());
+            BaseActivity.logDebug(TAG, "Inspection data set at: " + System.currentTimeMillis(), null);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -143,7 +144,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        System.err.println("Got second response at: " + System.currentTimeMillis());
+                        BaseActivity.logDebug(TAG, "Got restaurant data response at: " + System.currentTimeMillis(), null);
                         try {
                             JSONArray restaurants = response.getJSONObject("result").getJSONArray("records");
 
@@ -169,7 +170,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                                 restaurantDataToReturn.add(restaurantEntry);
                                 addRestaurantToDB(restaurantEntry);
                             }
-                            System.err.println("Finished second loop at: " + System.currentTimeMillis());
+                            BaseActivity.logDebug(TAG, "Finished adding restaurants to list at: " + System.currentTimeMillis(), null);
                             Collections.sort(restaurantDataToReturn, new Comparator<Restaurant>() {
                                 @Override
                                 public int compare(Restaurant o1, Restaurant o2) {
@@ -195,22 +196,21 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                                 activity.startUpdateChecker();
                             }
 
-                        } catch (JSONException e) {
-                            System.err.println("CAUGHT AN EXCEPTION: ");
-                            e.printStackTrace();
+                        } catch (JSONException e)
+                        {
+                            BaseActivity.logDebug(TAG, "Caught JSON Exception", e);
                         }
                     }
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                System.err.println("That didn't work! here is the stacktrace: ");
-                error.printStackTrace();
+                BaseActivity.logDebug(TAG, "Volley error getting restaurant data", error);
                 activity.handleVolleyError(error);
             }
         });
 
         queue.add(jsonRequest);
-        System.err.println("Made second http request at: " + System.currentTimeMillis());
+        BaseActivity.logDebug(TAG, "Restaurant data request queued at: : " + System.currentTimeMillis(), null);
     }
 
     private void addRestaurantToDB(Restaurant restaurant)

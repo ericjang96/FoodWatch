@@ -179,7 +179,6 @@ public final class DatabaseContract {
             int length;
             while ((length = myInput.read(buffer)) > 0)
             {
-                System.err.println("COPYING DB");
                 myOutput.write(buffer, 0, length);
             }
 

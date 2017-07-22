@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ejang.foodwatch.R;
 import com.ejang.foodwatch.Utils.HazardRating;
@@ -65,6 +66,7 @@ public class RestaurantDetailActivity extends AppCompatActivity {
 
         // Set the address and hazard details text for the restaurant.
         ((TextView) findViewById(R.id.restaurant_address_text)).setText(intent.getStringExtra(getString(R.string.intent_extra_restaurant_address)) + ", Surrey BC");
+        ((TextView) findViewById(R.id.restaurant_name_text)).setText(intent.getStringExtra(getString(R.string.intent_extra_restaurant_name)));
         HazardRating hazard = (HazardRating) intent.getSerializableExtra(getString(R.string.intent_extra_restaurant_hazard));
         TextView hazardText = (TextView) findViewById(R.id.restaurant_hazard_text);
         if (hazard == HazardRating.SAFE)
@@ -123,10 +125,14 @@ public class RestaurantDetailActivity extends AppCompatActivity {
             if (item.getIcon().getConstantState().equals(getDrawable(R.drawable.ic_action_fave_border).getConstantState()))
             {
                 item.setIcon(R.drawable.ic_action_fave);
+                Toast toast = Toast.makeText(this, "Added to Favorites", Toast.LENGTH_LONG);
+                toast.show();
             }
             else
             {
                 item.setIcon(R.drawable.ic_action_fave_border);
+                Toast toast = Toast.makeText(this, "Removed from Favorites", Toast.LENGTH_LONG);
+                toast.show();
             }
         }
         else if (id == android.R.id.home)

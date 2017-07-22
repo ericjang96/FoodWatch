@@ -136,7 +136,6 @@ public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
     @Override
     protected void onPostExecute(Void v)
     {
-        System.err.println("Calling initialize list view after load from db");
         if (!activity.updateCheckerStarted)
         {
             activity.startUpdateChecker();
