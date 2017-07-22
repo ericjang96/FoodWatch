@@ -14,7 +14,9 @@ You must have at least these two APIs enabled for the API key:
     * Google Maps Android API
     * Google Places API for Android
 3. Open a command prompt in .../FoodWatch directory
-4. Connect a physical device or start an Android emulator with API level 23 or higher
-5. Run the command "gradlew tasks" to see a list of tasks you can run (e.g. "gradlew installDebug" will install the app on the connected device. "gradlew createDebugCoverageReport" will run all automated tests and create a code coverage report.)
+4. Connect a physical debuggable device or start an Android emulator with API level 23 or higher
+5. Run the command "build-with-gradle.bat" to build the project. This script build the APK, install it on a connected device, run all unit + integration tests, and create a coverage report.  
+**Coverage report location**: FoodWatch/app/build/reports/jacoco/jacocoTestReport/html/index.html  
+**APK location**: FoodWatch/app/build/outputs/apk
 
 You shouldn't need a local installation of Gradle as the wrapper will install it for you on your first "gradlew" command.
