@@ -13,5 +13,3 @@ This is an Android app that lets users quickly browse and search restaurant heal
 
 ### How to build this project (Installs a debug version of the app):
 Full instructions available on [FoodWatch README](https://github.com/ericjang96/FoodWatch/blob/master/README.md)
-
-You shouldn't need a local installation of Gradle as the wrapper will install it for you on your first "gradlew" command.
