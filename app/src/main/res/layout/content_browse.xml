@@ -69,15 +69,16 @@
         android:layout_marginTop="74dp"/>
 
     <LinearLayout
+        android:id="@+id/_restaurant_list_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         android:layout_below="@id/listview_caption">
 
         <RelativeLayout
             android:id="@+id/restaurant_listview_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_below="@id/listview_caption"
             android:background="@color/colorWhite"
             android:layout_weight="1">
@@ -119,7 +120,31 @@
                     <!--android:text="No Location Selected"/>-->
             <!--</RelativeLayout>-->
 
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/fab_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="16dp"
+                android:layout_marginRight="16dp"
+                app:backgroundTint="#FF6D00"
+                android:clickable="true"
+                android:scaleType="center"
+                android:src="@mipmap/ic_location_found"
+                app:elevation="6dp"
+                app:fabSize="normal"
+                app:rippleColor="#FFD180" />
+
         </RelativeLayout>
+
+        <TextView
+            android:id="@+id/text_third_party_attr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:background="@color/colorWhite"
+            android:visibility="gone"/>
 
     </LinearLayout>
 
@@ -139,22 +164,6 @@
         android:layout_alignParentStart="true" >
 
     </com.arlib.floatingsearchview.FloatingSearchView>
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_location"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="16dp"
-        android:layout_marginRight="16dp"
-        app:backgroundTint="#FF6D00"
-        android:clickable="true"
-        android:scaleType="center"
-        android:src="@mipmap/ic_location_found"
-        app:elevation="6dp"
-        app:fabSize="normal"
-        app:rippleColor="#FFD180" />
 
     <!--<ImageView-->
         <!--android:layout_width="match_parent"-->

@@ -9,6 +9,7 @@
     <color name="colorHeader">#0f61cc</color>
     <color name="colorWhite">#ffffff</color>
 
+    <color name="darkestBlackFont">#424242</color>
     <color name="blackFont">#616161</color>
     <color name="greyFont">#999999</color>
 

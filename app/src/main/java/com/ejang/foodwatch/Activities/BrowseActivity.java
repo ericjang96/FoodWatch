@@ -9,6 +9,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
+import android.text.Html;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -199,6 +200,14 @@ public class BrowseActivity extends BaseActivity {
             @Override
             public void onResult(PlaceBuffer places)
             {
+                if (places.getStatus().isSuccess())
+                {
+                    if (places.getAttributions() != null && places.getAttributions().length() > 0)
+                    {
+                        final String thirdPartyAttributions = String.valueOf(places.getAttributions());
+                        showThirdPartyAttr(thirdPartyAttributions);
+                    }
+                }
                 Place surreyCityHall = places.get(0);
                 userLat = surreyCityHall.getLatLng().latitude;
                 userLong = surreyCityHall.getLatLng().longitude;
@@ -230,14 +239,11 @@ public class BrowseActivity extends BaseActivity {
             findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         }
 
-        if (BuildConfig.DEBUG)
+        if (BuildConfig.DEBUG && forceWebDownload)
         {
             // For the purpose of testing Volley. Force a download from Surrey website and return
-            if (forceWebDownload)
-            {
-                downloadRestaurantsAndInspections(false);
-                return;
-            }
+            downloadRestaurantsAndInspections(false);
+            return;
         }
 
         if (dbCopySuccess)
@@ -373,6 +379,9 @@ public class BrowseActivity extends BaseActivity {
                 sharedPref.edit().putString(getString(R.string.last_saved_location_id), place.getId()).commit();
                 setLocationCaption(place);
                 reorderResults();
+
+                String attr = PlacePicker.getAttributions(data);
+                showThirdPartyAttr(attr);
             }
         }
     }
@@ -583,6 +592,33 @@ public class BrowseActivity extends BaseActivity {
     {
         allRestaurants.clear();
         allRestaurants.addAll(restaurants);
+    }
+
+    private void showThirdPartyAttr(String thirdPartyAttr)
+    {
+        TextView textView = (TextView) findViewById(R.id.text_third_party_attr);
+        if (thirdPartyAttr == null || thirdPartyAttr.length() == 0)
+        {
+            if (textView.getVisibility() == View.VISIBLE)
+            {
+                textView.setVisibility(View.GONE);
+            }
+        }
+        else
+        {
+            if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.M)
+            {
+                textView.setText(Html.fromHtml(thirdPartyAttr));
+            }
+            else
+            {
+                textView.setText(Html.fromHtml(thirdPartyAttr, Html.FROM_HTML_MODE_LEGACY));
+            }
+            if (textView.getVisibility() != View.VISIBLE)
+            {
+                textView.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     public static Double getUserLat()

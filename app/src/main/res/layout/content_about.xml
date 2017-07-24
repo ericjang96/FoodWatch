@@ -15,7 +15,7 @@ from the open data catalogue of City of Surrey. More cities may be added in the 
 Eric Jang. Feel free to give feedback or report bugs through the app's feedback form."
         android:padding="14dp"
         android:textSize="16sp"
-        android:textColor="@color/blackFont"
+        android:textColor="@color/darkestBlackFont"
         />
 
     <ImageView
@@ -38,14 +38,14 @@ Eric Jang. Feel free to give feedback or report bugs through the app's feedback 
             android:layout_height="wrap_content"
             android:text="Open source licenses"
             android:textSize="16sp"
-            android:textColor="@color/blackFont"/>
+            android:textColor="@color/darkestBlackFont"/>
 
         <TextView
             android:id="@+id/license_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="License details for open source software"
-            android:textColor="@color/greyFont"
+            android:textColor="@color/blackFont"
             android:textSize="14sp"
             android:layout_marginTop="2dp" />
     </LinearLayout>
