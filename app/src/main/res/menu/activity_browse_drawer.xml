@@ -15,9 +15,9 @@
             android:icon="@mipmap/ic_about"
             android:title="About" />
         <item
-            android:id="@+id/nav_send"
-            android:icon="@drawable/ic_menu_send"
-            android:title="Send Feedback" />
+            android:id="@+id/nav_settings"
+            android:icon="@mipmap/ic_settings"
+            android:title="Settings" />
     </group>
 
 
