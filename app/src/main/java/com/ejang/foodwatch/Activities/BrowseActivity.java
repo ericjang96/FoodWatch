@@ -58,7 +58,7 @@ public class BrowseActivity extends BaseActivity {
 
     public RestaurantListAdapter restaurantListAdapter;
     public ListView restaurantList;
-    public HashMap<String, ArrayList<InspectionResult>> inspectionData;
+    public static HashMap<String, ArrayList<InspectionResult>> inspectionData;
     public ArrayList<Restaurant> allRestaurants;
     public static volatile AtomicBoolean locationSet;
     public static volatile AtomicBoolean dataAndAdapterAvailable;
