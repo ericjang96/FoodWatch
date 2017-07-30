@@ -2,15 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/action_refresh"
+        android:id="@+id/action_filter_by_fave"
         android:orderInCategory="100"
-        android:title="@string/action_refresh"
+        android:title="@string/action_filter_by_fave"
+        android:checkable="true"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_filter_search"
+        android:id="@+id/action_filter_by_safety"
         android:orderInCategory="100"
-        android:title="@string/action_filter_search"
+        android:title="@string/action_filter_by_safety"
         app:showAsAction="never" />
 
 </menu>

@@ -6,6 +6,7 @@ package com.ejang.foodwatch.AsyncTasks;
 
 import android.content.ContentValues;
 import android.os.AsyncTask;
+import android.os.Looper;
 
 import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
@@ -51,6 +52,8 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
         restaurantDataToReturn = new ArrayList<>();
     }
 
+    // This method begins when the HTTP response with inspection data is received. It organizes and
+    // sets BrowseActivity.inspectionData
     @Override
     protected RestaurantListAdapter doInBackground(JSONObject... params) {
 
@@ -86,7 +89,6 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                 addInspectionToMap(result);
             }
 
-            // activity.writeableDB.execSQL(SQL_JOIN_TEMP_INSPECTION_TABLE_TO_REAL);
             activity.setInspectionData(inspectionDataToReturn);
 
             BaseActivity.logDebug(TAG, "Inspection data set at: " + System.currentTimeMillis(), null);
@@ -105,10 +107,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
         return null;
     }
 
-    /**
-     * After completing background task
-     * Dismiss the progress dialog
-     * **/
+    // Once inspectionData has been set, it is time to handle the restaurant data.
     @Override
     protected void onPostExecute(RestaurantListAdapter adapter) {
         addAllRestaurants();
@@ -130,9 +129,8 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
         long newRowId = activity.writeableDB.insert(DatabaseContract.InspectionTable.INSPECTION_TABLE_NAME, null, values);
     }
 
+    // Makes HTTP call to fetch restaurant info and sets BrowseActivity.allRestaurants
     public void addAllRestaurants() {
-        // Set up request to get all inspection data. On response, set the adapter and listview
-        // in this UI thread. This isn't heavy-weight enough to need an async task currently.
         String url = activity.getString(R.string.url_all_restaurants);
         RequestQueue queue = Volley.newRequestQueue(activity);
 
@@ -143,63 +141,78 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(JSONObject response) {
-                        BaseActivity.logDebug(TAG, "Got restaurant data response at: " + System.currentTimeMillis(), null);
-                        try {
-                            JSONArray restaurants = response.getJSONObject("result").getJSONArray("records");
-
-                            for (int i = 0; i < restaurants.length(); i++) {
-                                JSONObject restaurant = restaurants.getJSONObject(i);
-                                String name = restaurant.getString("NAME");
-                                String addr = restaurant.getString("PHYSICALADDRESS");
-                                Double latitude = restaurant.getDouble("LATITUDE");
-                                Double longitude = restaurant.getDouble("LONGITUDE");
-                                String trackingID = restaurant.getString("TRACKINGNUMBER");
-
-                                Restaurant restaurantEntry;
-                                if (activity.inspectionData.containsKey(trackingID))
-                                {
-                                    restaurantEntry = new Restaurant(name, addr, latitude,
-                                            longitude, trackingID, activity.inspectionData.get(trackingID));
-                                }
-                                else
-                                {
-                                    restaurantEntry = new Restaurant(name, addr, latitude,
-                                            longitude, trackingID, null);
-                                }
-                                restaurantDataToReturn.add(restaurantEntry);
-                                addRestaurantToDB(restaurantEntry);
-                            }
-                            BaseActivity.logDebug(TAG, "Finished adding restaurants to list at: " + System.currentTimeMillis(), null);
-                            Collections.sort(restaurantDataToReturn, new Comparator<Restaurant>() {
-                                @Override
-                                public int compare(Restaurant o1, Restaurant o2) {
-                                    return o1.distanceFromUser.compareTo(o2.distanceFromUser);
-                                }
-                            });
-
-                            // Once all inspection and restaurant data has been processed, save current
-                            // time to shared pref as the refresh time.
-                            BrowseActivity.getSharedPref().edit().putLong(activity.getString(R.string.last_refresh_time), System.currentTimeMillis()).commit();
-
-                            activity.setRestaurantData(restaurantDataToReturn);
-                            if (!updateQuietly)
-                            {
-                                activity.initializeListView();
-                            }
-                            else
-                            {
-                                activity.showRefreshDialog();
-                            }
-                            if (!activity.updateCheckerStarted)
-                            {
-                                activity.startUpdateChecker();
-                            }
-
-                        } catch (JSONException e)
+                    public void onResponse(final JSONObject response)
+                    {
+                        // Once HTTP response with restaurant data is received, start an AsyncTask
+                        // to organize and add all restaurant info to BrowseActivity.allRestaurants
+                        AsyncTask addRestaurants = new AsyncTask()
                         {
-                            BaseActivity.logDebug(TAG, "Caught JSON Exception", e);
-                        }
+                            @Override
+                            protected Object doInBackground(Object[] params)
+                            {
+                                BaseActivity.logDebug(TAG, "Got restaurant data response at: " + System.currentTimeMillis(), null);
+                                try
+                                {
+                                    JSONArray restaurants = response.getJSONObject("result").getJSONArray("records");
+
+                                    for (int i = 0; i < restaurants.length(); i++)
+                                    {
+                                        JSONObject restaurant = restaurants.getJSONObject(i);
+                                        String name = restaurant.getString("NAME");
+                                        String addr = restaurant.getString("PHYSICALADDRESS");
+                                        Double latitude = restaurant.getDouble("LATITUDE");
+                                        Double longitude = restaurant.getDouble("LONGITUDE");
+                                        String trackingID = restaurant.getString("TRACKINGNUMBER");
+
+                                        Restaurant restaurantEntry;
+                                        if (activity.inspectionData.containsKey(trackingID))
+                                        {
+                                            restaurantEntry = new Restaurant(name, addr, latitude,
+                                                    longitude, trackingID, activity.inspectionData.get(trackingID));
+                                        }
+                                        else
+                                        {
+                                            restaurantEntry = new Restaurant(name, addr, latitude,
+                                                    longitude, trackingID, null);
+                                        }
+                                        restaurantDataToReturn.add(restaurantEntry);
+                                        addRestaurantToDB(restaurantEntry);
+                                    }
+                                    BaseActivity.logDebug(TAG, "Finished adding restaurants to list at: " + System.currentTimeMillis(), null);
+                                    Collections.sort(restaurantDataToReturn, new Comparator<Restaurant>() {
+                                        @Override
+                                        public int compare(Restaurant o1, Restaurant o2) {
+                                            return o1.distanceFromUser.compareTo(o2.distanceFromUser);
+                                        }
+                                    });
+
+                                    // Once all inspection and restaurant data has been processed, save current
+                                    // time to shared pref as the most recent refresh time.
+                                    BrowseActivity.getSharedPref().edit().putLong(activity.getString(R.string.last_refresh_time), System.currentTimeMillis()).commit();
+
+                                    activity.setRestaurantData(restaurantDataToReturn);
+                                    if (!updateQuietly)
+                                    {
+                                        activity.initializeListView();
+                                    }
+                                    else
+                                    {
+                                        activity.showRefreshDialog();
+                                    }
+                                    if (!activity.updateCheckerStarted)
+                                    {
+                                        activity.startUpdateChecker();
+                                    }
+
+                                } catch (JSONException e)
+                                {
+                                    BaseActivity.logDebug(TAG, "Caught JSON Exception", e);
+                                }
+
+                                return null;
+                            }
+                        };
+                        addRestaurants.execute();
                     }
                 }, new Response.ErrorListener() {
             @Override

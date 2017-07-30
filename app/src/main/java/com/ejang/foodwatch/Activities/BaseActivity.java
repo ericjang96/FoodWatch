@@ -42,6 +42,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
     NavigationView navigationView;
     DatabaseHelper dbHelper;
     boolean dbCopySuccess;
+    private static Boolean activityVisible;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +120,18 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
         super.onDestroy();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        activityVisible = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        activityVisible = false;
+    }
+
     // Helper for handling all Volley errors.
     public void handleVolleyError(VolleyError error)
     {
@@ -194,5 +207,10 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
                 Log.d(tag, message);
             }
         }
+    }
+
+    public static Boolean isActivityVisible()
+    {
+        return activityVisible;
     }
 }

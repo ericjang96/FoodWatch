@@ -74,6 +74,11 @@
                 android:layout_weight="7"/>
         </TableRow>
 
+        <View
+            android:layout_height="2sp"
+            android:background="@color/transparent"
+            />
+
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

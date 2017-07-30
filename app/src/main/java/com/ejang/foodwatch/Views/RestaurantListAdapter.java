@@ -1,5 +1,6 @@
 package com.ejang.foodwatch.Views;
 
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,8 +18,11 @@ import com.ejang.foodwatch.Utils.Restaurant;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Created by Eric on 2017-03-22.
@@ -159,6 +163,7 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
     protected boolean includeModerate = true;
     protected boolean includeUnsafe = true;
     protected boolean includeUnknown = true;
+    protected boolean favesOnly = false;
 
     // Inner class defined to support different types of filtering.
     public class RestaurantFilter extends Filter
@@ -177,16 +182,23 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
             else
             {
                 ArrayList<Restaurant> filteredRestaurants = new ArrayList<>();
-
+                ArrayList<String> faveRestaurants = new ArrayList<>();
+                if (favesOnly)
+                {
+                    faveRestaurants = getFaves();
+                }
                 for (Restaurant restaurant : allOriginalRestaurants) {
                     // Filter by matching text in the search box to the restaurant's name.
                     if (restaurant.name.toLowerCase().contains(constraint.toString().toLowerCase()))
                     {
                         HazardRating hazard = restaurant.mostRecentSafety;
-                        if ((includeSafe && hazard == HazardRating.SAFE) || (includeModerate && hazard == HazardRating.MODERATE)
-                                || (includeUnsafe && hazard == HazardRating.UNSAFE) || (includeUnknown && hazard == HazardRating.UNKNOWN))
+                        if (((includeSafe && hazard == HazardRating.SAFE) || (includeModerate && hazard == HazardRating.MODERATE)
+                                || (includeUnsafe && hazard == HazardRating.UNSAFE) || (includeUnknown && hazard == HazardRating.UNKNOWN)))
                         {
-                            filteredRestaurants.add(restaurant);
+                            if (favesOnly && faveRestaurants.contains(restaurant.trackingID) || !favesOnly)
+                            {
+                                filteredRestaurants.add(restaurant);
+                            }
                         }
                     }
                 }
@@ -210,6 +222,29 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
             }
         }
 
+        private ArrayList<String> getFaves()
+        {
+            SharedPreferences faveSharedPref = context.getSharedPreferences(context.getString(R.string.shared_pref_fave_list), MODE_PRIVATE);
+            String faveRestaurants = faveSharedPref.getString(context.getString(R.string.faved_restaurants), "");
+
+            if (faveRestaurants.length() > 0)
+            {
+                if (faveRestaurants.contains(","))
+                {
+                    return new ArrayList<>(Arrays.asList(faveRestaurants.split(",")));
+                }
+                else
+                {
+                    return new ArrayList<>(Arrays.asList(faveRestaurants));
+                }
+            }
+            else
+            {
+                return new ArrayList<>();
+            }
+
+        }
+
         public void setIncludeSafe(boolean includeSafe)
         {
             RestaurantListAdapter.this.includeSafe = includeSafe;
@@ -228,6 +263,11 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         public void setIncludeUnknown(boolean includeUnknown)
         {
             RestaurantListAdapter.this.includeUnknown = includeUnknown;
+        }
+
+        public void setShowFavesOnly(boolean favesOnly)
+        {
+            RestaurantListAdapter.this.favesOnly = favesOnly;
         }
     }
 }

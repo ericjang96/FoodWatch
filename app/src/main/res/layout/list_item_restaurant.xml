@@ -92,7 +92,7 @@
         android:text="distance"
         android:textColor="@color/greyFont"
         android:textSize="14sp"
-        android:gravity="center"
+        android:gravity="right|center"
         android:paddingRight="16sp"/>
 
 </LinearLayout>

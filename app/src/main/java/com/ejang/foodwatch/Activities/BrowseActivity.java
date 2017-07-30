@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -57,7 +58,7 @@ public class BrowseActivity extends BaseActivity {
 
     public RestaurantListAdapter restaurantListAdapter;
     public ListView restaurantList;
-    public static HashMap<String, ArrayList<InspectionResult>> inspectionData;
+    public HashMap<String, ArrayList<InspectionResult>> inspectionData;
     public ArrayList<Restaurant> allRestaurants;
     public static volatile AtomicBoolean locationSet;
     public static volatile AtomicBoolean dataAndAdapterAvailable;
@@ -70,7 +71,7 @@ public class BrowseActivity extends BaseActivity {
     private static Double userLong;
     private FloatingActionButton locationFab;
     private Boolean dataUpdateAvailable;
-
+    private FloatingSearchView floatingSearchView;
     // This is for testing purposes ONLY to force HTTP connections for testing Volley tasks.
     private Boolean forceWebDownload = false;
 
@@ -139,6 +140,21 @@ public class BrowseActivity extends BaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (floatingSearchView != null && restaurantListAdapter !=null)
+        {
+            // Apply filter again in case the user unfavorited a restaurant before returning to this activity.
+            restaurantListAdapter.getFilter().filter(floatingSearchView.getQuery());
+        }
+        if (dataUpdateAvailable)
+        {
+            // If a data update is available when the activity becomes visible, notify the user.
+            showRefreshDialog();
+        }
+    }
+
+    @Override
     public void onBackPressed() {
         // If drawer is open, back button closes it. If not, return to last content.
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -163,15 +179,23 @@ public class BrowseActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        // If refresh button clicked, then fetch data from City of Surrey website regardless of
-        // last refresh time.
-        if (id == R.id.action_refresh) {
-            sharedPref.edit().putLong(getString(R.string.last_refresh_time), 0).commit();
-            initializeAllRestaurants();
-            return true;
+        // If filter by safety button is clicked, filter restaurants to only show favorites.
+        if (id == R.id.action_filter_by_fave)
+        {
+            if (!item.isChecked())
+            {
+                restaurantListAdapter.getFilter().setShowFavesOnly(true);
+                item.setChecked(true);
+            }
+            else
+            {
+                restaurantListAdapter.getFilter().setShowFavesOnly(false);
+                item.setChecked(false);
+            }
+            restaurantListAdapter.getFilter().filter(floatingSearchView.getQuery());
         }
         // If filter search button clicked, bring up dialog listing the filter options.
-        if (id == R.id.action_filter_search)
+        if (id == R.id.action_filter_by_safety)
         {
             showFilterDialog();
         }
@@ -345,13 +369,13 @@ public class BrowseActivity extends BaseActivity {
     {
         // Initialize the search bar functionality. If user input text into the bar before the
         // RestaurantListAdapter was initialized, apply the filter right away.
-        FloatingSearchView mSearchView = (FloatingSearchView) findViewById(R.id.restaurants_search);
-        if (!mSearchView.getQuery().equals(""))
+        floatingSearchView = (FloatingSearchView) findViewById(R.id.restaurants_search);
+        if (!floatingSearchView.getQuery().equals(""))
         {
-            BrowseActivity.this.restaurantListAdapter.getFilter().filter(mSearchView.getQuery());
+            BrowseActivity.this.restaurantListAdapter.getFilter().filter(floatingSearchView.getQuery());
         }
 
-        mSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener()
+        floatingSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener()
         {
             @Override
             public void onSearchTextChanged(String oldQuery, final String newQuery)
@@ -475,14 +499,13 @@ public class BrowseActivity extends BaseActivity {
                 restaurantListAdapter.getFilter().setIncludeUnsafe(checkedSafetyRatings[2]);
                 restaurantListAdapter.getFilter().setIncludeUnknown(checkedSafetyRatings[3]);
 
-                FloatingSearchView mSearchView = (FloatingSearchView) findViewById(R.id.restaurants_search);
-                BrowseActivity.this.restaurantListAdapter.getFilter().filter(mSearchView.getQuery());
+                BrowseActivity.this.restaurantListAdapter.getFilter().filter(floatingSearchView.getQuery());
             }
         });
 
 
         // Set the neutral/cancel button click listener
-        builder.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // Do something when click the neutral button
@@ -496,6 +519,13 @@ public class BrowseActivity extends BaseActivity {
 
     public void showRefreshDialog()
     {
+        // Don't run if the activity is not visible at the moment or it will freeze the UI for a few seconds.
+        if (!isActivityVisible())
+        {
+            dataUpdateAvailable = true;
+            return;
+        }
+
         // Build an AlertDialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
@@ -513,8 +543,7 @@ public class BrowseActivity extends BaseActivity {
                 // Do something when click positive button
                 restaurantListAdapter.updateAdapterData(allRestaurants);
 
-                FloatingSearchView mSearchView = (FloatingSearchView) findViewById(R.id.restaurants_search);
-                mSearchView.clearQuery();
+                floatingSearchView.clearQuery();
 
                 Toast toast = Toast.makeText(BrowseActivity.this, "Update was successful", Toast.LENGTH_LONG);
                 toast.show();
@@ -571,11 +600,13 @@ public class BrowseActivity extends BaseActivity {
 
     private boolean isTimeToUpdate(Long epochDate)
     {
-        // 604800000 milliseconds = 1 week
+        // For testing purposes, always return true for debug build
         if (BuildConfig.DEBUG)
         {
             return true;
         }
+        // 604800000 milliseconds = 1 week. The City of Surrey website is updated on a weekly basis
+        // so it is the default data update interval.
         else
         {
             return System.currentTimeMillis() - epochDate > 604800000;

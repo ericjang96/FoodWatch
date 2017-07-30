@@ -3,11 +3,15 @@
     <string name="app_browse_title">Restaurants</string>
     <string name="app_about_title">About</string>
 
+    <string name="shared_pref_fave_list">Fave List Shared Preference</string>
+    <string name="faved_restaurants">Favorited Restaurants</string>
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_refresh">Refresh</string>
-    <string name="action_filter_search">Filter Search</string>
+    <string name="action_filter_by_safety">Filter by safety</string>
+    <string name="action_filter_by_fave">Favorites only</string>
     <string name="action_fave">Fave</string>
 
     <string name="url_all_inspections">http://data.surrey.ca/api/action/datastore_search?resource_id=30b38b66-649f-4507-a632-d5f6f5fe87f1&amp;limit=50000</string>

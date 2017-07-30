@@ -14,7 +14,9 @@ public class Violation {
     {
         this.violationCode = code;
         this.violationCrit = crit;
-        this.violationDetail = detail;
+        // The replace code is to fix a minor bug. The HTTP response has random Â characters
+        // that don't belong in the text.
+        this.violationDetail = detail.replace("Â", "");
     }
 
     public String getViolationCode()
