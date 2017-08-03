@@ -63,7 +63,7 @@ public class BrowseActivity extends BaseActivity {
     public static volatile AtomicBoolean locationSet;
     public static volatile AtomicBoolean dataAndAdapterAvailable;
     public static SQLiteDatabase writeableDB;
-    public static boolean listViewInitialized;
+    public boolean listViewInitialized;
     public boolean updateCheckerStarted = false;
 
     private static SharedPreferences sharedPref;
@@ -74,6 +74,7 @@ public class BrowseActivity extends BaseActivity {
     private FloatingSearchView floatingSearchView;
     // This is for testing purposes ONLY to force HTTP connections for testing Volley tasks.
     private Boolean forceWebDownload = false;
+    private Boolean downloadEnabled = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -573,6 +574,12 @@ public class BrowseActivity extends BaseActivity {
     // and listview have been initialized on startup to avoid updating while the initial load is still happening.
     public void startUpdateChecker()
     {
+        if (!downloadEnabled)
+        {
+            // For tests where downloads need to be disabled. Otherwise, asynctask DownloadWeb will be
+            // started and freeze Espresso tests.
+            return;
+        }
         final Runnable updateChecker = new Runnable() {
             public void run()
             {
@@ -678,8 +685,13 @@ public class BrowseActivity extends BaseActivity {
     }
 
     // For testing purposes only.
-    private void setForceWebDownload(Boolean forceDownload)
+    public void setForceWebDownload(Boolean forceDownload)
     {
         forceWebDownload = forceDownload;
+    }
+
+    public void setDownloadEnabled(Boolean downloadEnabled)
+    {
+        this.downloadEnabled = downloadEnabled;
     }
 }

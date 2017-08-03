@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 
 import com.ejang.foodwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.BuildConfig;
 import com.ejang.foodwatch.SQLDB.DatabaseContract;
 import com.ejang.foodwatch.Utils.InspectionResult;
 import com.ejang.foodwatch.Utils.Restaurant;
@@ -149,22 +150,34 @@ public class LoadFromDB extends AsyncTask<SQLiteDatabase, Void, Void> {
         if (inspectionDataToReturn.containsKey(inspection.trackingID))
         {
             ArrayList<InspectionResult> inspections = inspectionDataToReturn.get(inspection.trackingID);
-            Boolean addedInspection = false;
             Integer initialSize = inspections.size();
-            // This loop ensures that the inspections for the same key (trackingID) are organized by the date. Most recent inspection is last in the array.
-            for (int i = 0 ; i < initialSize ; i++)
+            // This loop ensures that the inspections for the same key (trackingID) are organized by the date.
+            for (int i = 0 ; i <= initialSize ; i++)
             {
-                if(inspections.get(i).inspectionDate.before(inspection.inspectionDate))
+                if (i == initialSize)
                 {
-                    inspections.add(i, inspection);
-                    addedInspection = true;
+                    inspections.add(inspection);
                     break;
                 }
-            }
-            // Covers the case where the inspection to add is the most recent.
-            if (!addedInspection)
-            {
-                inspections.add(inspection);
+                if (BuildConfig.DEBUG)
+                {
+                    // For debug builds, the inspections are organized from oldest to newest. This
+                    // is for testing purposes to avoid dealing with NetstedScrollView and Espresso.
+                    if(inspections.get(i).inspectionDate.after(inspection.inspectionDate))
+                    {
+                        inspections.add(i, inspection);
+                        break;
+                    }
+                }
+                else
+                {
+                    // For all other builds, the inspections are organized from newest to oldest.
+                    if(inspections.get(i).inspectionDate.before(inspection.inspectionDate))
+                    {
+                        inspections.add(i, inspection);
+                        break;
+                    }
+                }
             }
         }
         else

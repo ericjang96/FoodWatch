@@ -1,6 +1,7 @@
 package com.ejang.foodwatch.Utils;
 
 import com.ejang.foodwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.BuildConfig;
 
 import java.util.ArrayList;
 
@@ -34,7 +35,15 @@ public class Restaurant {
         }
         else
         {
-            mostRecentSafety = inspections.get(0).hazardRating;
+            if (BuildConfig.DEBUG)
+            {
+                // debug builds have the newest inspection at the end of the array.
+                mostRecentSafety = inspections.get(inspections.size() - 1).hazardRating;
+            }
+            else
+            {
+                mostRecentSafety = inspections.get(0).hazardRating;
+            }
         }
     }
 

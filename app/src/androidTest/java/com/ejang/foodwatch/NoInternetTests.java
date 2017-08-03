@@ -22,18 +22,19 @@ public class NoInternetTests {
     public ActivityTestRule<BrowseActivity> mActivityTestRule = new ActivityTestRule<>(BrowseActivity.class);
 
     @Before
-    public void setExampleLocation() {
+    public void setUp() throws InterruptedException {
         BrowseActivity.setUserLat(49.191461);
         BrowseActivity.setUserLong(-122.849329);
         BrowseActivity.locationSet.set(true);
+        mActivityTestRule.getActivity().setDownloadEnabled(false);
+        while (!mActivityTestRule.getActivity().listViewInitialized)
+        {
+            Thread.sleep(500);
+        }
     }
 
     @Test
     public void testVolleyError() {
-    }
-
-    @After
-    public void after() throws InterruptedException {
-        Thread.sleep(3000);
+        return;
     }
 }

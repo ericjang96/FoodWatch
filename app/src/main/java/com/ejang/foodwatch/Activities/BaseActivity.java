@@ -117,7 +117,6 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
     protected void onDestroy()
     {
         super.onDestroy();
-        dbHelper.close();
     }
 
     @Override

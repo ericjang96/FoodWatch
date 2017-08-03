@@ -85,7 +85,7 @@ public class InspectionListAdapter extends ArrayAdapter<InspectionResult> {
         }
         else
         {
-            hazardIcon.setBackgroundColor(context.getColor(R.color.colorGreyBackground));
+            hazardIcon.setImageResource(R.mipmap.ic_unknown);
         }
 
         return rowView;

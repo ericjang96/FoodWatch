@@ -16,7 +16,7 @@ public class Violation {
         this.violationCrit = crit;
         // The replace code is to fix a minor bug. The HTTP response has random Â characters
         // that don't belong in the text.
-        this.violationDetail = detail.replace("Â", "");
+        this.violationDetail = detail.replace("Â", "").replace("â\u0080", "'");
     }
 
     public String getViolationCode()
