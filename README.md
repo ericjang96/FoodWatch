@@ -20,3 +20,8 @@ You must have at least these two APIs enabled for the API key:
 **APK location**: FoodWatch/app/build/outputs/apk
 
 You shouldn't need a local installation of Gradle as the wrapper will install it for you on your first "gradlew" command.
+
+### Note:
+There are differences between the release version and debug version of this app:
+ 1. Some messages are only logged on the debug build
+ 2. The list of inspections for restaurants in the debug build are ordered from oldest to newest (as opposed to newest to oldest in the release build). This was done so that integration tests can verify the inspection without dealing with NestedScrollView and Espresso issues. It was an issue to have the newest inspection at the top because the top element can be updated. The tests need the top element to be the same inspection item each time, so the oldest inspection is at the top now.
