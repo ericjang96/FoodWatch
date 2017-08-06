@@ -10,17 +10,15 @@
         android:id="@+id/about_blurb"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Thank you for using FoodWatch Beta. \n\nThis version uses restaurant and inspection data
-from the open data catalogue of City of Surrey. More cities may be added in the future.\n\nFoodWatch is developed by
-Eric Jang. Feel free to give feedback or report bugs through the app's feedback form."
+        android:text=""
         android:padding="14dp"
         android:textSize="16sp"
         android:textColor="@color/darkestBlackFont"
         />
 
-    <ImageView
+    <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
+        android:layout_height="2sp"
         android:background="@color/colorGreyBackground"/>
 
     <LinearLayout
@@ -49,5 +47,74 @@ Eric Jang. Feel free to give feedback or report bugs through the app's feedback 
             android:textSize="14sp"
             android:layout_marginTop="2dp" />
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2sp"
+        android:background="@color/colorGreyBackground"/>
+
+    <LinearLayout
+        android:id="@+id/about_privacy_policy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="14dp"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:background="@drawable/grey_ripple_effect">
+
+        <TextView
+            android:id="@+id/privacy_policy_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Privacy Policy"
+            android:textSize="16sp"
+            android:textColor="@color/darkestBlackFont"/>
+
+        <TextView
+            android:id="@+id/privacy_policy_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Information about how data is used"
+            android:textColor="@color/blackFont"
+            android:textSize="14sp"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2sp"
+        android:background="@color/colorGreyBackground"/>
+
+    <LinearLayout
+        android:id="@+id/about_disclaimer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="14dp"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:background="@drawable/grey_ripple_effect">
+
+        <TextView
+            android:id="@+id/disclaimer_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Disclaimers"
+            android:textSize="16sp"
+            android:textColor="@color/darkestBlackFont"/>
+
+        <TextView
+            android:id="@+id/disclaimer_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="This app cannot guarantee the accuracy of information"
+            android:textColor="@color/blackFont"
+            android:textSize="14sp"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2sp"
+        android:background="@color/colorGreyBackground"/>
 
 </LinearLayout>

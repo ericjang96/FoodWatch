@@ -1,20 +1,15 @@
 package com.ejang.foodwatch.Views;
 
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.ejang.foodwatch.Activities.RestaurantDetailActivity;
 import com.ejang.foodwatch.R;
-import com.ejang.foodwatch.Utils.HazardRating;
-import com.ejang.foodwatch.Utils.InspectionResult;
 import com.ejang.foodwatch.Utils.Violation;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 /**

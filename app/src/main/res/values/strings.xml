@@ -40,4 +40,10 @@
     <string name="intent_extra_restaurant_address">Restaurant Address</string>
     <string name="intent_extra_restaurant_hazard">Restaurant Hazard</string>
     <string name="intent_extra_restaurant_ID">Restaurant ID</string>
+
+    <string name="about_blurb_text">Thank you for using FoodWatch Beta. &lt;br&gt;&lt;br&gt;
+        This app uses restaurant and inspection data from the open data catalogue of City of Surrey.
+        More cities may be added in the future. &lt;br&gt;&lt;br&gt; FoodWatch is developed by Eric Jang.
+        Feel free to give feedback or report bugs through my &lt;a href=\'https://github.com/ericjang96/FoodWatch/issues\'&gt;Github Issues Page&lt;/a&gt;</string>
+
 </resources>

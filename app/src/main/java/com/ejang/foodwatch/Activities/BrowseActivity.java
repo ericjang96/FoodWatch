@@ -4,8 +4,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Looper;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -76,6 +76,8 @@ public class BrowseActivity extends BaseActivity {
     private Boolean forceWebDownload = false;
     private Boolean downloadEnabled = true;
 
+    private AsyncTask downloadTask;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -137,7 +139,14 @@ public class BrowseActivity extends BaseActivity {
         });
 
         setInitialLocation();
-        initializeAllRestaurants();
+        if (inspectionData != null && allRestaurants != null && inspectionData.size() > 0 && allRestaurants.size() > 0)
+        {
+            initializeListView();
+        }
+        else
+        {
+            initializeAllRestaurants();
+        }
     }
 
     @Override
@@ -562,9 +571,12 @@ public class BrowseActivity extends BaseActivity {
             }
         });
 
-        AlertDialog dialog = builder.create();
-        // Display the alert dialog on interface
-        dialog.show();
+        if (!BrowseActivity.this.isFinishing())
+        {
+            AlertDialog dialog = builder.create();
+            // Display the alert dialog on interface
+            dialog.show();
+        }
     }
 
     private final ScheduledExecutorService scheduler =

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/disclaimer_layout"
+    android:background="@color/colorWhite">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/blackFont"
+        android:textSize="16sp"
+        android:text="FoodWatch aims to provide accurate restaurant cleanliness data to its users, but no guarantees can be made regarding its accuracy or reliability. It is possible that there are errors from the data provided by the City of Surrey, or from the app itself. If you notice any errors, you are encouraged to report them through the link provided in the previous page. \n\nYou use FoodWatch at yout own risk. \n\nFoodWatch is not affiliated with the City of Surrey."
+        android:padding="10dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/blackFont"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:text="City of Surrey data disclaimer"
+        android:paddingTop="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/blackFont"
+        android:textSize="16sp"
+        android:text="Restaurant and inspection data in this app is provided with permission of City of Surrey. City of Surrey assumes no responsibility for the accuracy of the data used in this product."
+        android:padding="10dp"/>
+
+</LinearLayout>

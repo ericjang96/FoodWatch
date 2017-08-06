@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/privacy_policy_layout"
+    android:background="@color/colorWhite">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/blackFont"
+        android:textSize="16sp"
+        android:text="This page clearly outlines the information that is collected, and how it is used. Currently, no personal data is collected by this app, but it does use some Android permissions to run smoothly."
+        android:padding="10dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/blackFont"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:text="Android device permissions used"
+        android:paddingTop="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/blackFont"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:text="Full network access"
+        android:paddingTop="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/blackFont"
+        android:textSize="16sp"
+        android:text="(android.permission.INTERNET)\nPurpose: Fetch restaurant inspection data from the City of Surrey website."
+        android:paddingBottom="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/blackFont"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:text="Access to external storage"
+        android:paddingTop="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/blackFont"
+        android:textSize="16sp"
+        android:text="(android.permission.WRITE_EXTERNAL_STORAGE)\nPurpose: Necessary to support Google Map functionality for Google Play Services versions older than 8.3."
+        android:paddingBottom="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"/>
+
+</LinearLayout>

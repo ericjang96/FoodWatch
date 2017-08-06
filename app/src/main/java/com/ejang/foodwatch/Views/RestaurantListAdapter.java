@@ -9,14 +9,11 @@ import android.widget.Filter;
 import android.widget.TextView;
 
 import com.ejang.foodwatch.Activities.BrowseActivity;
-import com.ejang.foodwatch.Activities.RestaurantDetailActivity;
 import com.ejang.foodwatch.R;
 import com.ejang.foodwatch.Utils.HazardRating;
 import com.ejang.foodwatch.Utils.InspectionResult;
 import com.ejang.foodwatch.Utils.Restaurant;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

@@ -6,13 +6,10 @@ package com.ejang.foodwatch.AsyncTasks;
 
 import android.content.ContentValues;
 import android.os.AsyncTask;
-import android.os.Looper;
 
-import com.android.volley.NoConnectionError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
-import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
@@ -74,6 +71,11 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
             JSONArray records = response.getJSONObject("result").getJSONArray("records");
             for (int i = 0 ; i < records.length() ; i++)
             {
+                if (activity.isDestroyed() || activity.isFinishing())
+                {
+                    this.cancel(true);
+                    break;
+                }
                 JSONObject record = records.getJSONObject(i);
                 String date = record.getString("InspectionDate");
                 String type = record.getString("InspType");
@@ -157,6 +159,11 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
 
                                     for (int i = 0; i < restaurants.length(); i++)
                                     {
+                                        if (activity.isDestroyed() || activity.isFinishing())
+                                        {
+                                            this.cancel(true);
+                                            break;
+                                        }
                                         JSONObject restaurant = restaurants.getJSONObject(i);
                                         String name = restaurant.getString("NAME");
                                         String addr = restaurant.getString("PHYSICALADDRESS");
@@ -190,26 +197,29 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                                     // time to shared pref as the most recent refresh time.
                                     BrowseActivity.getSharedPref().edit().putLong(activity.getString(R.string.last_refresh_time), System.currentTimeMillis()).commit();
 
-                                    activity.setRestaurantData(restaurantDataToReturn);
-                                    if (!updateQuietly)
-                                    {
-                                        activity.initializeListView();
-                                    }
-                                    else
-                                    {
-                                        activity.showRefreshDialog();
-                                    }
-                                    if (!activity.updateCheckerStarted)
-                                    {
-                                        activity.startUpdateChecker();
-                                    }
-
                                 } catch (JSONException e)
                                 {
                                     BaseActivity.logDebug(TAG, "Caught JSON Exception", e);
                                 }
 
                                 return null;
+                            }
+
+                            @Override
+                            protected void onPostExecute(Object result) {
+                                activity.setRestaurantData(restaurantDataToReturn);
+                                if (!updateQuietly)
+                                {
+                                    activity.initializeListView();
+                                }
+                                else
+                                {
+                                    activity.showRefreshDialog();
+                                }
+                                if (!activity.updateCheckerStarted)
+                                {
+                                    activity.startUpdateChecker();
+                                }
                             }
                         };
                         addRestaurants.execute();
