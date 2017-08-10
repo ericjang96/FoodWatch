@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
@@ -129,6 +130,19 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
     protected void onPause() {
         super.onPause();
         activityVisible = false;
+    }
+
+    @Override
+    public void onBackPressed() {
+        // If drawer is open, back button closes it. If not, return to last content.
+        if (drawerLayout.isDrawerOpen(GravityCompat.START))
+        {
+            drawerLayout.closeDrawers();
+        }
+        else
+        {
+            super.onBackPressed();
+        }
     }
 
     // Helper for handling all Volley errors.

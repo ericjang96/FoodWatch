@@ -153,6 +153,7 @@ public class RestaurantListAdapter extends ArrayAdapter<Restaurant> {
         this.addAll(restaurants);
         this.allOriginalRestaurants.clear();
         this.allOriginalRestaurants.addAll(restaurants);
+        this.getFilter().filter(context.floatingSearchView.getQuery());
         this.notifyDataSetChanged();
     }
 

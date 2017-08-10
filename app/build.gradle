@@ -42,6 +42,7 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:3.0.0') {
         exclude group: 'com.android.support', module: 'support-annotations'
     }
+    androidTestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'
     debugCompile 'com.android.support.test.espresso:espresso-core:3.0.0'
     compile 'com.android.support:appcompat-v7:25.1.0'
     compile 'com.android.support:support-v4:25.1.0'

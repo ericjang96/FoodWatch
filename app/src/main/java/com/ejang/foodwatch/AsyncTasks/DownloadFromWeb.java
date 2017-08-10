@@ -5,6 +5,7 @@ package com.ejang.foodwatch.AsyncTasks;
  */
 
 import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 
 import com.android.volley.Request;
@@ -15,6 +16,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ejang.foodwatch.Activities.BaseActivity;
 import com.ejang.foodwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.BuildConfig;
 import com.ejang.foodwatch.R;
 import com.ejang.foodwatch.SQLDB.DatabaseContract;
 import com.ejang.foodwatch.Utils.InspectionResult;
@@ -39,14 +41,16 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
     private Boolean updateQuietly;
     private HashMap<String, ArrayList<InspectionResult>> inspectionDataToReturn;
     private ArrayList<Restaurant> restaurantDataToReturn;
+    private SQLiteDatabase writeableDB;
 
-    public DownloadFromWeb(BrowseActivity activity, Boolean updateQuietly)
+    public DownloadFromWeb(BrowseActivity activity, Boolean updateQuietly, SQLiteDatabase writeableDB)
     {
         // Only BrowseActivity will directly call this constructor, so we can access its fields.
         this.activity = activity;
         this.updateQuietly = updateQuietly;
         inspectionDataToReturn = new HashMap<>();
         restaurantDataToReturn = new ArrayList<>();
+        this.writeableDB = writeableDB;
     }
 
     // This method begins when the HTTP response with inspection data is received. It organizes and
@@ -71,11 +75,6 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
             JSONArray records = response.getJSONObject("result").getJSONArray("records");
             for (int i = 0 ; i < records.length() ; i++)
             {
-                if (activity.isDestroyed() || activity.isFinishing())
-                {
-                    this.cancel(true);
-                    break;
-                }
                 JSONObject record = records.getJSONObject(i);
                 String date = record.getString("InspectionDate");
                 String type = record.getString("InspType");
@@ -128,7 +127,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
         values.put(DatabaseContract.InspectionTable.COLUMN_INSPECTION_NUM_NONCRIT, inspection.numNonCritical);
 
         // Insert the new row, returning the primary key value of the new row
-        long newRowId = activity.writeableDB.insert(DatabaseContract.InspectionTable.INSPECTION_TABLE_NAME, null, values);
+        long newRowId = writeableDB.insert(DatabaseContract.InspectionTable.INSPECTION_TABLE_NAME, null, values);
     }
 
     // Makes HTTP call to fetch restaurant info and sets BrowseActivity.allRestaurants
@@ -159,11 +158,6 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
 
                                     for (int i = 0; i < restaurants.length(); i++)
                                     {
-                                        if (activity.isDestroyed() || activity.isFinishing())
-                                        {
-                                            this.cancel(true);
-                                            break;
-                                        }
                                         JSONObject restaurant = restaurants.getJSONObject(i);
                                         String name = restaurant.getString("NAME");
                                         String addr = restaurant.getString("PHYSICALADDRESS");
@@ -207,6 +201,13 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
 
                             @Override
                             protected void onPostExecute(Object result) {
+                                // At this point, the database has been fully updated. If the activity
+                                // is destroyed or finishing, do not call any methods that modify the UI.
+                                if (activity.isDestroyed() || activity.isFinishing())
+                                {
+                                    this.cancel(true);
+                                    return;
+                                }
                                 activity.setRestaurantData(restaurantDataToReturn);
                                 if (!updateQuietly)
                                 {
@@ -247,7 +248,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
         values.put(DatabaseContract.RestaurantTable.COLUMN_RES_LONG, restaurant.longitude);
 
         // Insert the new row, returning the primary key value of the new row
-        long newRowId = activity.writeableDB.insert(DatabaseContract.RestaurantTable.RES_TABLE_NAME, null, values);
+        long newRowId = writeableDB.insert(DatabaseContract.RestaurantTable.RES_TABLE_NAME, null, values);
     }
 
     private void addInspectionToMap(InspectionResult inspection)
@@ -256,22 +257,34 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
         if (inspectionDataToReturn.containsKey(inspection.trackingID))
         {
             ArrayList<InspectionResult> inspections = inspectionDataToReturn.get(inspection.trackingID);
-            Boolean addedInspection = false;
             Integer initialSize = inspections.size();
-            // This loop ensures that the inspections for the same key (trackingID) are organized by the date. Most recent inspection is last in the array.
-            for (int i = 0 ; i < initialSize ; i++)
+            // This loop ensures that the inspections for the same key (trackingID) are organized by the date.
+            for (int i = 0 ; i <= initialSize ; i++)
             {
-                if(inspections.get(i).inspectionDate.before(inspection.inspectionDate))
+                if (i == initialSize)
                 {
-                    inspections.add(i, inspection);
-                    addedInspection = true;
+                    inspections.add(inspection);
                     break;
                 }
-            }
-            // Covers the case where the inspection to add is the most recent.
-            if (!addedInspection)
-            {
-                inspections.add(inspection);
+                if (BuildConfig.DEBUG)
+                {
+                    // For debug builds, the inspections are organized from oldest to newest. This
+                    // is for testing purposes to avoid dealing with NetstedScrollView and Espresso.
+                    if(inspections.get(i).inspectionDate.after(inspection.inspectionDate))
+                    {
+                        inspections.add(i, inspection);
+                        break;
+                    }
+                }
+                else
+                {
+                    // For all other builds, the inspections are organized from newest to oldest.
+                    if(inspections.get(i).inspectionDate.before(inspection.inspectionDate))
+                    {
+                        inspections.add(i, inspection);
+                        break;
+                    }
+                }
             }
         }
         else

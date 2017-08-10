@@ -71,12 +71,11 @@ public class BrowseActivity extends BaseActivity {
     private static Double userLong;
     private FloatingActionButton locationFab;
     private Boolean dataUpdateAvailable;
-    private FloatingSearchView floatingSearchView;
-    // This is for testing purposes ONLY to force HTTP connections for testing Volley tasks.
+    public FloatingSearchView floatingSearchView;
+    // Variables declared after this point are for testing purposes only.
     private Boolean forceWebDownload = false;
     private Boolean downloadEnabled = true;
-
-    private AsyncTask downloadTask;
+    public Boolean updateDialogShown = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,20 +160,6 @@ public class BrowseActivity extends BaseActivity {
         {
             // If a data update is available when the activity becomes visible, notify the user.
             showRefreshDialog();
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        // If drawer is open, back button closes it. If not, return to last content.
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START))
-        {
-            this.moveTaskToBack(true);
-        }
-        else
-        {
-            super.onBackPressed();
         }
     }
 
@@ -310,7 +295,7 @@ public class BrowseActivity extends BaseActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         // Start AsyncTask to download/organize the inspection and restaurant data.
-                        new DownloadFromWeb(BrowseActivity.this, updateQuietly).execute(response);
+                        new DownloadFromWeb(BrowseActivity.this, updateQuietly, writeableDB).execute(response);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -553,12 +538,11 @@ public class BrowseActivity extends BaseActivity {
                 // Do something when click positive button
                 restaurantListAdapter.updateAdapterData(allRestaurants);
 
-                floatingSearchView.clearQuery();
-
                 Toast toast = Toast.makeText(BrowseActivity.this, "Update was successful", Toast.LENGTH_LONG);
                 toast.show();
                 // initializeListView();
                 dataUpdateAvailable = false;
+                updateDialogShown = false;
             }
         });
 
@@ -576,6 +560,7 @@ public class BrowseActivity extends BaseActivity {
             AlertDialog dialog = builder.create();
             // Display the alert dialog on interface
             dialog.show();
+            updateDialogShown = true;
         }
     }
 
@@ -608,7 +593,7 @@ public class BrowseActivity extends BaseActivity {
         };
         if (BuildConfig.DEBUG)
         {
-            scheduler.scheduleAtFixedRate(updateChecker, 10, 300, TimeUnit.SECONDS);
+            scheduler.schedule(updateChecker, 10, TimeUnit.SECONDS);
         }
         else
         {

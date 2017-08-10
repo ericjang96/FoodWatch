@@ -56,18 +56,4 @@ public class AboutActivity extends BaseActivity {
             }
         });
     }
-
-    @Override
-    public void onBackPressed() {
-        // If drawer is open, back button closes it. If not, return to last content.
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START))
-        {
-            drawer.closeDrawer(GravityCompat.START);
-        }
-        else
-        {
-            super.onBackPressed();
-        }
-    }
 }

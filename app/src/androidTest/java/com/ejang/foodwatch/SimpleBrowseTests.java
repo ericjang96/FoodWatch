@@ -2,6 +2,7 @@ package com.ejang.foodwatch;
 
 
 import android.support.test.espresso.ViewInteraction;
+import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
@@ -35,6 +36,7 @@ import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anything;
 
+@LargeTest
 @RunWith(AndroidJUnit4.class)
 public class SimpleBrowseTests {
 
