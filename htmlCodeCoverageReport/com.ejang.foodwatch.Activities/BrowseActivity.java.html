@@ -1,0 +1,696 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BrowseActivity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">com.ejang.foodwatch.Activities</a> &gt; <span class="el_source">BrowseActivity.java</span></div><h1>BrowseActivity.java</h1><pre class="source lang-java linenums">package com.ejang.foodwatch.Activities;
+
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
+import android.text.Html;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
+import android.widget.FrameLayout;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.arlib.floatingsearchview.FloatingSearchView;
+import com.ejang.foodwatch.AsyncTasks.DownloadFromWeb;
+import com.ejang.foodwatch.AsyncTasks.LoadFromDB;
+import com.ejang.foodwatch.BuildConfig;
+import com.ejang.foodwatch.R;
+import com.ejang.foodwatch.Utils.InspectionResult;
+import com.ejang.foodwatch.Utils.Restaurant;
+import com.ejang.foodwatch.Views.RestaurantListAdapter;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.PlaceBuffer;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.maps.model.LatLng;
+
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+<span class="fc" id="L55">public class BrowseActivity extends BaseActivity {</span>
+
+    private static final String TAG = &quot;BrowseActivity&quot;;
+
+    public RestaurantListAdapter restaurantListAdapter;
+    public ListView restaurantList;
+    public static HashMap&lt;String, ArrayList&lt;InspectionResult&gt;&gt; inspectionData;
+    public ArrayList&lt;Restaurant&gt; allRestaurants;
+    public static volatile AtomicBoolean locationSet;
+    public static volatile AtomicBoolean dataAndAdapterAvailable;
+    public static SQLiteDatabase writeableDB;
+    public boolean listViewInitialized;
+<span class="fc" id="L67">    public boolean updateCheckerStarted = false;</span>
+
+    private static SharedPreferences sharedPref;
+    private static Double userLat;
+    private static Double userLong;
+    private FloatingActionButton locationFab;
+    private Boolean dataUpdateAvailable;
+    public FloatingSearchView floatingSearchView;
+    // Variables declared after this point are for testing purposes only.
+<span class="fc" id="L76">    private Boolean forceWebDownload = false;</span>
+<span class="fc" id="L77">    private Boolean downloadEnabled = true;</span>
+<span class="fc" id="L78">    public Boolean updateDialogShown = false;</span>
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+<span class="fc" id="L82">        downloadEnabled = getIntent().getBooleanExtra(&quot;downloadEnabled&quot;, true);</span>
+        // Prevents another activity from being started if another instance of it is already running.
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (!isTaskRoot())</span>
+        {
+<span class="nc" id="L86">            final Intent intent = getIntent();</span>
+<span class="nc bnc" id="L87" title="All 4 branches missed.">            if (intent.hasCategory(Intent.CATEGORY_LAUNCHER) &amp;&amp; Intent.ACTION_MAIN.equals(intent.getAction())) {</span>
+
+<span class="nc" id="L89">                logDebug(TAG, &quot;Main Activity is not the root.  Finishing Main Activity instead of launching.&quot;, null);</span>
+<span class="nc" id="L90">                finish();</span>
+<span class="nc" id="L91">                return;</span>
+            }
+        }
+
+<span class="fc" id="L95">        super.onCreate(savedInstanceState);</span>
+
+        // Get a database that has read/write access to for this activity. Get the shared pref for
+        // checking when the last data update time was.
+<span class="fc" id="L99">        writeableDB = dbHelper.getWritableDatabase();</span>
+<span class="fc" id="L100">        sharedPref = this.getPreferences(this.MODE_PRIVATE);</span>
+
+        // This is not a useful variable at the moment, but keeping it around just in case I need
+        // to use it again in the future.
+<span class="fc" id="L104">        locationSet = new AtomicBoolean(false);</span>
+
+        // TODO: I might want to split this into 2 variables because the data could be busy, but the adapter could be free.
+<span class="fc" id="L107">        dataAndAdapterAvailable = new AtomicBoolean(true);</span>
+        // For now, this field is just for testing purposes.
+<span class="fc" id="L109">        listViewInitialized = false;</span>
+
+        // If this value is true, that means the user has selected &quot;No&quot; on the alert dialog last time
+        // when asked if they wanted to update their restaurant list. That means that the database
+        // is up to date, but the adapter/listview are not. So if this is true, we do not need to
+        // update the DB again, but just load the new data into adapter.
+<span class="fc" id="L115">        dataUpdateAvailable = false;</span>
+        // Set frame content to the correct layout for this activity.
+<span class="fc" id="L117">        FrameLayout contentFrameLayout = (FrameLayout) findViewById(R.id.content_frame);</span>
+<span class="fc" id="L118">        getLayoutInflater().inflate(R.layout.content_browse, contentFrameLayout);</span>
+        // Set the current view on the base class and set it to checked.
+<span class="fc" id="L120">        super.setCurrentNavView(R.id.nav_restaurant);</span>
+<span class="fc" id="L121">        navigationView.setCheckedItem(R.id.nav_restaurant);</span>
+
+<span class="fc" id="L123">        locationFab = (FloatingActionButton) findViewById(R.id.fab_location);</span>
+<span class="fc" id="L124">        locationFab.setOnClickListener(new View.OnClickListener() {</span>
+            @Override
+            public void onClick(View v) {
+<span class="fc" id="L127">                int PLACE_PICKER_REQUEST = 1;</span>
+<span class="fc" id="L128">                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();</span>
+
+                try {
+<span class="fc" id="L131">                    startActivityForResult(builder.build(BrowseActivity.this), PLACE_PICKER_REQUEST);</span>
+                }
+<span class="nc" id="L133">                catch (Exception e)</span>
+                {
+<span class="nc" id="L135">                    return;</span>
+<span class="fc" id="L136">                }</span>
+<span class="fc" id="L137">            }</span>
+        });
+
+<span class="fc" id="L140">        setInitialLocation();</span>
+<span class="pc bpc" id="L141" title="5 of 8 branches missed.">        if (inspectionData != null &amp;&amp; allRestaurants != null &amp;&amp; inspectionData.size() &gt; 0 &amp;&amp; allRestaurants.size() &gt; 0)</span>
+        {
+<span class="nc" id="L143">            initializeListView();</span>
+        }
+        else
+        {
+<span class="fc" id="L147">            initializeAllRestaurants();</span>
+        }
+<span class="fc" id="L149">    }</span>
+
+    @Override
+    protected void onResume() {
+<span class="fc" id="L153">        super.onResume();</span>
+<span class="pc bpc" id="L154" title="1 of 4 branches missed.">        if (floatingSearchView != null &amp;&amp; restaurantListAdapter !=null)</span>
+        {
+            // Apply filter again in case the user unfavorited a restaurant before returning to this activity.
+<span class="fc" id="L157">            restaurantListAdapter.getFilter().filter(floatingSearchView.getQuery());</span>
+        }
+<span class="pc bpc" id="L159" title="1 of 2 branches missed.">        if (dataUpdateAvailable)</span>
+        {
+            // If a data update is available when the activity becomes visible, notify the user.
+<span class="nc" id="L162">            showRefreshDialog();</span>
+        }
+<span class="fc" id="L164">    }</span>
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+<span class="fc" id="L169">        getMenuInflater().inflate(R.menu.browse, menu);</span>
+<span class="fc" id="L170">        return true;</span>
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+<span class="fc" id="L175">        int id = item.getItemId();</span>
+
+        // If filter by safety button is clicked, filter restaurants to only show favorites.
+<span class="pc bpc" id="L178" title="1 of 2 branches missed.">        if (id == R.id.action_filter_by_fave)</span>
+        {
+<span class="nc bnc" id="L180" title="All 2 branches missed.">            if (!item.isChecked())</span>
+            {
+<span class="nc" id="L182">                restaurantListAdapter.getFilter().setShowFavesOnly(true);</span>
+<span class="nc" id="L183">                item.setChecked(true);</span>
+            }
+            else
+            {
+<span class="nc" id="L187">                restaurantListAdapter.getFilter().setShowFavesOnly(false);</span>
+<span class="nc" id="L188">                item.setChecked(false);</span>
+            }
+<span class="nc" id="L190">            restaurantListAdapter.getFilter().filter(floatingSearchView.getQuery());</span>
+        }
+        // If filter search button clicked, bring up dialog listing the filter options.
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">        if (id == R.id.action_filter_by_safety)</span>
+        {
+<span class="fc" id="L195">            showFilterDialog();</span>
+        }
+
+<span class="fc" id="L198">        return super.onOptionsItemSelected(item);</span>
+    }
+
+    // Sets the initial location to use on startup of the app. If there is info from the previous
+    // location in sharedPref, use it. If not, use the City of Surrey as the default location.
+    private void setInitialLocation() {
+<span class="fc" id="L204">        String savedLocationID = sharedPref.getString(getString(R.string.last_saved_location_id), &quot;&quot;);</span>
+        String locationID;
+
+<span class="pc bpc" id="L207" title="1 of 2 branches missed.">        if (savedLocationID.length() &lt;= 0)</span>
+        {
+<span class="nc" id="L209">            locationID = getString(R.string.surrey_city_hall_google_id);</span>
+        }
+        else
+        {
+<span class="fc" id="L213">            locationID = savedLocationID;</span>
+        }
+<span class="fc" id="L215">        GoogleApiClient.Builder builder = new GoogleApiClient.Builder(this).addApi(Places.GEO_DATA_API);</span>
+<span class="fc" id="L216">        final GoogleApiClient client = builder.build();</span>
+<span class="fc" id="L217">        client.connect();</span>
+<span class="fc" id="L218">        Places.GeoDataApi.getPlaceById(client, locationID).setResultCallback(new ResultCallback&lt;PlaceBuffer&gt;() {</span>
+            @Override
+            public void onResult(PlaceBuffer places)
+            {
+<span class="pc bpc" id="L222" title="1 of 2 branches missed.">                if (places.getStatus().isSuccess())</span>
+                {
+<span class="pc bpc" id="L224" title="3 of 4 branches missed.">                    if (places.getAttributions() != null &amp;&amp; places.getAttributions().length() &gt; 0)</span>
+                    {
+<span class="nc" id="L226">                        final String thirdPartyAttributions = String.valueOf(places.getAttributions());</span>
+<span class="nc" id="L227">                        showThirdPartyAttr(thirdPartyAttributions);</span>
+                    }
+                }
+<span class="fc" id="L230">                Place surreyCityHall = places.get(0);</span>
+<span class="fc" id="L231">                userLat = surreyCityHall.getLatLng().latitude;</span>
+<span class="fc" id="L232">                userLong = surreyCityHall.getLatLng().longitude;</span>
+<span class="fc" id="L233">                setLocationCaption(surreyCityHall);</span>
+<span class="fc" id="L234">                locationSet.set(true);</span>
+<span class="fc" id="L235">                places.release();</span>
+<span class="fc" id="L236">                client.disconnect();</span>
+<span class="fc" id="L237">            }</span>
+        });
+
+<span class="fc" id="L240">        findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);</span>
+<span class="fc" id="L241">    }</span>
+
+    // This method is the entry point for populating the ListView of restaurants. If the DB copyover
+    // failed, it makes a HTTP request to the City of Surrey API. This is the worst case scenario,
+    // and will take around 1 minute to do the initial fetching/processing. If DB copy is successful,
+    // the method quickly populate the adapter and listview. Then we check for updates regularly in
+    // the background so the UI thread isn't affected.
+    public void initializeAllRestaurants() {
+        // Initialize empty hashmap and array that will hold the inspection and restaurant data.
+<span class="fc" id="L250">        inspectionData = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L251">        allRestaurants = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L252">        restaurantListAdapter = null;</span>
+<span class="fc" id="L253">        restaurantList = null;</span>
+
+        // Make loading icon visible
+<span class="pc bpc" id="L256" title="1 of 2 branches missed.">        if (locationSet.get())</span>
+        {
+<span class="nc" id="L258">            findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);</span>
+        }
+
+<span class="pc bpc" id="L261" title="2 of 4 branches missed.">        if (BuildConfig.DEBUG &amp;&amp; forceWebDownload)</span>
+        {
+            // For the purpose of testing Volley. Force a download from Surrey website and return
+<span class="nc" id="L264">            downloadRestaurantsAndInspections(false);</span>
+<span class="nc" id="L265">            return;</span>
+        }
+
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">        if (dbCopySuccess)</span>
+        {
+            // Start an async task to load restaurant and inspection data from the SQLite DB. Even
+            // if this data is more than a week old, load something first and update the data in the
+            // background so the user has something to see.
+<span class="fc" id="L273">            new LoadFromDB(BrowseActivity.this).execute(writeableDB);</span>
+        }
+        else
+        {
+            // If DB copy was unsuccessful, download everything from City of Surrey API.
+<span class="nc" id="L278">            downloadRestaurantsAndInspections(false);</span>
+        }
+<span class="fc" id="L280">    }</span>
+
+    private void downloadRestaurantsAndInspections(final Boolean updateQuietly)
+    {
+<span class="pc bpc" id="L284" title="1 of 2 branches missed.">        if (!updateQuietly)</span>
+        {
+<span class="nc" id="L286">            findViewById(R.id.init_bubble).setVisibility(View.VISIBLE);</span>
+        }
+        // Set up a request to get all inspection data. When response is returned, it starts
+        // an async task to organize this data.
+<span class="fc" id="L290">        String url = getString(R.string.url_all_inspections);</span>
+<span class="fc" id="L291">        RequestQueue queue = Volley.newRequestQueue(this);</span>
+
+<span class="fc" id="L293">        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,</span>
+<span class="fc" id="L294">                new Response.Listener&lt;JSONObject&gt;() {</span>
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        // Start AsyncTask to download/organize the inspection and restaurant data.
+<span class="fc" id="L298">                        new DownloadFromWeb(BrowseActivity.this, updateQuietly, writeableDB).execute(response);</span>
+<span class="fc" id="L299">                    }</span>
+<span class="fc" id="L300">                }, new Response.ErrorListener() {</span>
+            @Override
+            public void onErrorResponse(VolleyError error) {
+<span class="fc" id="L303">                handleVolleyError(error);</span>
+<span class="fc" id="L304">                logDebug(TAG, &quot;Volley for inspection data failed&quot;, error);</span>
+
+<span class="fc" id="L306">            }</span>
+        });
+
+<span class="fc" id="L309">        queue.add(jsonRequest);</span>
+<span class="fc" id="L310">        logDebug(TAG, &quot;Inspection data request queued at: &quot; + System.currentTimeMillis(), null);</span>
+<span class="fc" id="L311">    }</span>
+
+    public void initializeListView()
+    {
+        // Use a copy of allRestaurants to initialize the adapter because allRestaurants is going
+        // to be reused. Otherwise, when I modify allRestaurants, it will change the adapter as well
+        // because there is a reference to the array I initialized with.
+<span class="fc" id="L318">        ArrayList&lt;Restaurant&gt; allRestaurantsCopy = new ArrayList&lt;&gt;(allRestaurants);</span>
+
+<span class="fc" id="L320">        restaurantListAdapter = new RestaurantListAdapter(BrowseActivity.this, allRestaurantsCopy);</span>
+<span class="fc" id="L321">        restaurantList = (ListView) findViewById(R.id.restaurant_listview);</span>
+<span class="fc" id="L322">        restaurantList.setAdapter(restaurantListAdapter);</span>
+<span class="fc" id="L323">        restaurantList.setOnScrollListener(new AbsListView.OnScrollListener() {</span>
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+<span class="nc bnc" id="L326" title="All 2 branches missed.">                if (scrollState == SCROLL_STATE_FLING) {</span>
+<span class="nc" id="L327">                    locationFab.hide();</span>
+                }
+                else
+                {
+<span class="nc" id="L331">                    locationFab.show();</span>
+                }
+<span class="nc" id="L333">            }</span>
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+<span class="fc" id="L338">            }</span>
+        });
+<span class="fc" id="L340">        restaurantList.setOnItemClickListener(new AdapterView.OnItemClickListener() {</span>
+            @Override
+            public void onItemClick(AdapterView&lt;?&gt; parent, View view, int position, long id) {
+<span class="fc" id="L343">                Intent intent = new Intent(BrowseActivity.this, RestaurantDetailActivity.class);</span>
+<span class="fc" id="L344">                Restaurant resturant = (Restaurant) parent.getItemAtPosition(position);</span>
+
+                // Put all the information that the RestaurantDetailActivity will need in the intent before starting.
+<span class="fc" id="L347">                intent.putExtra(getString(R.string.intent_extra_restaurant_lat), resturant.latitude);</span>
+<span class="fc" id="L348">                intent.putExtra(getString(R.string.intent_extra_restaurant_long), resturant.longitude);</span>
+<span class="fc" id="L349">                intent.putExtra(getString(R.string.intent_extra_restaurant_name), resturant.name);</span>
+<span class="fc" id="L350">                intent.putExtra(getString(R.string.intent_extra_restaurant_address), resturant.address);</span>
+<span class="fc" id="L351">                intent.putExtra(getString(R.string.intent_extra_restaurant_hazard), resturant.mostRecentSafety);</span>
+<span class="fc" id="L352">                intent.putExtra(getString(R.string.intent_extra_restaurant_ID), resturant.trackingID);</span>
+<span class="fc" id="L353">                startActivity(intent);</span>
+<span class="fc" id="L354">            }</span>
+        });
+<span class="fc" id="L356">        findViewById(R.id.loadingPanel).setVisibility(View.GONE);</span>
+<span class="fc" id="L357">        logDebug(TAG, &quot;Set adapter at: &quot; + System.currentTimeMillis(), null);</span>
+
+<span class="fc" id="L359">        initializeSearchBar();</span>
+<span class="fc" id="L360">        listViewInitialized = true;</span>
+<span class="fc" id="L361">        dataAndAdapterAvailable.set(true);</span>
+<span class="fc" id="L362">    }</span>
+
+    public void initializeSearchBar()
+    {
+        // Initialize the search bar functionality. If user input text into the bar before the
+        // RestaurantListAdapter was initialized, apply the filter right away.
+<span class="fc" id="L368">        floatingSearchView = (FloatingSearchView) findViewById(R.id.restaurants_search);</span>
+<span class="pc bpc" id="L369" title="1 of 2 branches missed.">        if (!floatingSearchView.getQuery().equals(&quot;&quot;))</span>
+        {
+<span class="nc" id="L371">            BrowseActivity.this.restaurantListAdapter.getFilter().filter(floatingSearchView.getQuery());</span>
+        }
+
+<span class="fc" id="L374">        floatingSearchView.setOnQueryChangeListener(new FloatingSearchView.OnQueryChangeListener()</span>
+<span class="fc" id="L375">        {</span>
+            @Override
+            public void onSearchTextChanged(String oldQuery, final String newQuery)
+            {
+<span class="fc" id="L379">                BrowseActivity.this.restaurantListAdapter.getFilter().filter(newQuery);</span>
+<span class="fc" id="L380">            }</span>
+        });
+<span class="fc" id="L382">        findViewById(R.id.init_bubble).setVisibility(View.GONE);</span>
+<span class="fc" id="L383">        findViewById(R.id.anchor).setVisibility(View.GONE);</span>
+<span class="fc" id="L384">    }</span>
+
+    // Method called when user selects location with Google Places API.
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+<span class="pc bpc" id="L389" title="1 of 2 branches missed.">        if (requestCode == 1) {</span>
+<span class="pc bpc" id="L390" title="1 of 2 branches missed.">            if (resultCode == RESULT_OK) {</span>
+//                findViewById(R.id.no_location_selected_layout).setVisibility(View.GONE);
+<span class="fc" id="L392">                findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);</span>
+<span class="fc" id="L393">                Place place = PlacePicker.getPlace(data, this);</span>
+<span class="fc" id="L394">                LatLng latlng = place.getLatLng();</span>
+<span class="fc" id="L395">                userLat = latlng.latitude;</span>
+<span class="fc" id="L396">                userLong = latlng.longitude;</span>
+<span class="fc" id="L397">                locationSet.set(true);</span>
+
+<span class="fc" id="L399">                sharedPref.edit().putString(getString(R.string.last_saved_location_id), place.getId()).commit();</span>
+<span class="fc" id="L400">                setLocationCaption(place);</span>
+<span class="fc" id="L401">                reorderResults();</span>
+
+<span class="fc" id="L403">                String attr = PlacePicker.getAttributions(data);</span>
+<span class="fc" id="L404">                showThirdPartyAttr(attr);</span>
+            }
+        }
+<span class="fc" id="L407">    }</span>
+
+    // If the restaurantListAdapter isn't being initialized, it is updated and the listview is reordered
+    // according to the new distances from user location. Might want to make this async task to wait
+    // for adapter to be not null and available.
+    private void reorderResults()
+    {
+<span class="pc bpc" id="L414" title="1 of 2 branches missed.">        if (restaurantListAdapter != null)</span>
+        {
+            // Modifying the adapter, so make it unavailable to other threads.
+<span class="fc" id="L417">            dataAndAdapterAvailable.set(false);</span>
+<span class="fc" id="L418">            restaurantListAdapter.updateDistancesFromUser();</span>
+            // Makes the listview scroll to top after updating
+<span class="fc" id="L420">            restaurantList.setSelectionAfterHeaderView();</span>
+<span class="fc" id="L421">            findViewById(R.id.loadingPanel).setVisibility(View.GONE);</span>
+            // Make adapter available again
+<span class="fc" id="L423">            dataAndAdapterAvailable.set(true);</span>
+        }
+<span class="fc" id="L425">    }</span>
+
+    // Helper to set the location caption above the ListView.
+    private void setLocationCaption(Place place)
+    {
+<span class="fc" id="L430">        TextView location = (TextView) findViewById(R.id.listview_caption);</span>
+
+<span class="fc" id="L432">        String placeName = String.valueOf(place.getName());</span>
+        // If name isn't a coordinate, use the name.
+<span class="pc bpc" id="L434" title="2 of 4 branches missed.">        if (!placeName.contains(&quot;Â°&quot;) &amp;&amp; !placeName.contains(&quot;\&quot;&quot;))</span>
+        {
+<span class="fc" id="L436">            location.setText(&quot;Restaurants Near &quot; + place.getName());</span>
+        }
+        // Next best choice is an address if there is one.
+<span class="nc bnc" id="L439" title="All 2 branches missed.">        else if (place.getAddress().length() &gt; 0)</span>
+        {
+<span class="nc" id="L441">            location.setText(&quot;Restaurants Near &quot; + place.getAddress());</span>
+        }
+        // last resort is the coordinates.
+        else
+        {
+<span class="nc" id="L446">            location.setText(&quot;Restaurants Near &quot; + place.getName());</span>
+        }
+<span class="fc" id="L448">    }</span>
+
+    // String array for alert dialog multi choice items
+<span class="fc" id="L451">    String[] safetyRatings = new String[]{</span>
+            &quot;Safe&quot;,
+            &quot;Moderate&quot;,
+            &quot;Unsafe&quot;,
+            &quot;Unknown&quot;
+    };
+
+    // Boolean array for initial selected items
+<span class="fc" id="L459">    final boolean[] checkedSafetyRatings = new boolean[]{</span>
+            true, // Safe
+            true, // Moderate
+            true, // Unsafe
+            true // Unknown
+    };
+
+    // Helper for bringing up the multiple-choice filter dialog when &quot;Filter Search&quot; action is clicked.
+    private void showFilterDialog()
+    {
+        // Build an AlertDialog
+<span class="fc" id="L470">        AlertDialog.Builder builder = new AlertDialog.Builder(this);</span>
+
+        // Set multiple choice items for alert dialog
+<span class="fc" id="L473">        builder.setMultiChoiceItems(safetyRatings, checkedSafetyRatings, new DialogInterface.OnMultiChoiceClickListener() {</span>
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+
+                // Update the current focused item's checked status
+<span class="fc" id="L478">                checkedSafetyRatings[which] = isChecked;</span>
+<span class="fc" id="L479">            }</span>
+        });
+
+        // Specify the dialog is cancelable
+<span class="fc" id="L483">        builder.setCancelable(true);</span>
+
+        // Set a title for alert dialog
+<span class="fc" id="L486">        builder.setTitle(&quot;Filter by Safety&quot;);</span>
+
+        // Set the positive/yes button click listener
+<span class="fc" id="L489">        builder.setPositiveButton(&quot;Filter&quot;, new DialogInterface.OnClickListener() {</span>
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Do something when click positive button
+<span class="fc" id="L493">                restaurantListAdapter.getFilter().setIncludeSafe(checkedSafetyRatings[0]);</span>
+<span class="fc" id="L494">                restaurantListAdapter.getFilter().setIncludeModerate(checkedSafetyRatings[1]);</span>
+<span class="fc" id="L495">                restaurantListAdapter.getFilter().setIncludeUnsafe(checkedSafetyRatings[2]);</span>
+<span class="fc" id="L496">                restaurantListAdapter.getFilter().setIncludeUnknown(checkedSafetyRatings[3]);</span>
+
+<span class="fc" id="L498">                BrowseActivity.this.restaurantListAdapter.getFilter().filter(floatingSearchView.getQuery());</span>
+<span class="fc" id="L499">            }</span>
+        });
+
+
+        // Set the neutral/cancel button click listener
+<span class="fc" id="L504">        builder.setNegativeButton(&quot;Cancel&quot;, new DialogInterface.OnClickListener() {</span>
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Do something when click the neutral button
+<span class="nc" id="L508">            }</span>
+        });
+
+<span class="fc" id="L511">        AlertDialog dialog = builder.create();</span>
+        // Display the alert dialog on interface
+<span class="fc" id="L513">        dialog.show();</span>
+<span class="fc" id="L514">    }</span>
+
+    public void showRefreshDialog()
+    {
+        // Don't run if the activity is not visible at the moment or it will freeze the UI for a few seconds.
+<span class="pc bpc" id="L519" title="1 of 2 branches missed.">        if (!isActivityVisible())</span>
+        {
+<span class="nc" id="L521">            dataUpdateAvailable = true;</span>
+<span class="nc" id="L522">            return;</span>
+        }
+
+        // Build an AlertDialog
+<span class="fc" id="L526">        AlertDialog.Builder builder = new AlertDialog.Builder(this);</span>
+
+        // Specify the dialog is cancelable
+<span class="fc" id="L529">        builder.setCancelable(true);</span>
+
+        // Set a title for alert dialog
+<span class="fc" id="L532">        builder.setTitle(&quot;Update Inspection Data&quot;);</span>
+<span class="fc" id="L533">        builder.setMessage(&quot;Check for new data from the City of Surrey and update your restaurants?&quot;);</span>
+
+        // Set the positive/yes button click listener
+<span class="fc" id="L536">        builder.setPositiveButton(&quot;OK&quot;, new DialogInterface.OnClickListener() {</span>
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Do something when click positive button
+<span class="fc" id="L540">                restaurantListAdapter.updateAdapterData(allRestaurants);</span>
+
+<span class="fc" id="L542">                Toast toast = Toast.makeText(BrowseActivity.this, &quot;Update was successful&quot;, Toast.LENGTH_LONG);</span>
+<span class="fc" id="L543">                toast.show();</span>
+                // initializeListView();
+<span class="fc" id="L545">                dataUpdateAvailable = false;</span>
+<span class="fc" id="L546">                updateDialogShown = false;</span>
+<span class="fc" id="L547">            }</span>
+        });
+
+
+        // Set the neutral/cancel button click listener
+<span class="fc" id="L552">        builder.setNegativeButton(&quot;Later&quot;, new DialogInterface.OnClickListener() {</span>
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+<span class="nc" id="L555">                dataUpdateAvailable = true;</span>
+<span class="nc" id="L556">            }</span>
+        });
+
+<span class="pc bpc" id="L559" title="1 of 2 branches missed.">        if (!BrowseActivity.this.isFinishing())</span>
+        {
+<span class="fc" id="L561">            AlertDialog dialog = builder.create();</span>
+            // Display the alert dialog on interface
+<span class="fc" id="L563">            dialog.show();</span>
+<span class="fc" id="L564">            updateDialogShown = true;</span>
+        }
+<span class="fc" id="L566">    }</span>
+
+<span class="fc" id="L568">    private final ScheduledExecutorService scheduler =</span>
+<span class="fc" id="L569">            Executors.newScheduledThreadPool(1);</span>
+
+    // Starts the ticker to check if an update is necessary. This ticker is started after the adapter
+    // and listview have been initialized on startup to avoid updating while the initial load is still happening.
+    public void startUpdateChecker()
+    {
+<span class="fc bfc" id="L575" title="All 2 branches covered.">        if (!downloadEnabled)</span>
+        {
+            // For tests where downloads need to be disabled. Otherwise, asynctask DownloadWeb will be
+            // started and freeze Espresso tests.
+<span class="fc" id="L579">            return;</span>
+        }
+<span class="fc" id="L581">        final Runnable updateChecker = new Runnable() {</span>
+            public void run()
+            {
+<span class="pc bpc" id="L584" title="3 of 4 branches missed.">                if (dataUpdateAvailable &amp;&amp; dataAndAdapterAvailable.get())</span>
+                {
+<span class="nc" id="L586">                    showRefreshDialog();</span>
+                }
+<span class="pc bpc" id="L588" title="2 of 4 branches missed.">                else if (isTimeToUpdate(System.currentTimeMillis()) &amp;&amp; dataAndAdapterAvailable.get())</span>
+                {
+<span class="fc" id="L590">                    logDebug(TAG, &quot;background HTTP update started&quot;, null);</span>
+<span class="fc" id="L591">                    downloadRestaurantsAndInspections(true);</span>
+                }
+<span class="fc" id="L593">            }</span>
+        };
+<span class="pc bpc" id="L595" title="1 of 2 branches missed.">        if (BuildConfig.DEBUG)</span>
+        {
+<span class="fc" id="L597">            scheduler.schedule(updateChecker, 10, TimeUnit.SECONDS);</span>
+        }
+        else
+        {
+<span class="nc" id="L601">            scheduler.scheduleAtFixedRate(updateChecker, 3, 180, TimeUnit.SECONDS);</span>
+        }
+<span class="fc" id="L603">        updateCheckerStarted = true;</span>
+<span class="fc" id="L604">    }</span>
+
+    private boolean isTimeToUpdate(Long epochDate)
+    {
+        // For testing purposes, always return true for debug build
+<span class="pc bpc" id="L609" title="1 of 2 branches missed.">        if (BuildConfig.DEBUG)</span>
+        {
+<span class="fc" id="L611">            return true;</span>
+        }
+        // 604800000 milliseconds = 1 week. The City of Surrey website is updated on a weekly basis
+        // so it is the default data update interval.
+        else
+        {
+<span class="nc bnc" id="L617" title="All 2 branches missed.">            return System.currentTimeMillis() - epochDate &gt; 604800000;</span>
+        }
+    }
+
+    public void setInspectionData(HashMap&lt;String, ArrayList&lt;InspectionResult&gt;&gt; inspections)
+    {
+<span class="fc" id="L623">        inspectionData.clear();</span>
+<span class="fc" id="L624">        inspectionData.putAll(inspections);</span>
+<span class="fc" id="L625">    }</span>
+
+    public void setRestaurantData(ArrayList&lt;Restaurant&gt; restaurants)
+    {
+<span class="fc" id="L629">        allRestaurants.clear();</span>
+<span class="fc" id="L630">        allRestaurants.addAll(restaurants);</span>
+<span class="fc" id="L631">    }</span>
+
+    private void showThirdPartyAttr(String thirdPartyAttr)
+    {
+<span class="fc" id="L635">        TextView textView = (TextView) findViewById(R.id.text_third_party_attr);</span>
+<span class="pc bpc" id="L636" title="3 of 4 branches missed.">        if (thirdPartyAttr == null || thirdPartyAttr.length() == 0)</span>
+        {
+<span class="pc bpc" id="L638" title="1 of 2 branches missed.">            if (textView.getVisibility() == View.VISIBLE)</span>
+            {
+<span class="nc" id="L640">                textView.setVisibility(View.GONE);</span>
+            }
+        }
+        else
+        {
+<span class="nc bnc" id="L645" title="All 2 branches missed.">            if (android.os.Build.VERSION.SDK_INT &lt;= android.os.Build.VERSION_CODES.M)</span>
+            {
+<span class="nc" id="L647">                textView.setText(Html.fromHtml(thirdPartyAttr));</span>
+            }
+            else
+            {
+<span class="nc" id="L651">                textView.setText(Html.fromHtml(thirdPartyAttr, Html.FROM_HTML_MODE_LEGACY));</span>
+            }
+<span class="nc bnc" id="L653" title="All 2 branches missed.">            if (textView.getVisibility() != View.VISIBLE)</span>
+            {
+<span class="nc" id="L655">                textView.setVisibility(View.VISIBLE);</span>
+            }
+        }
+<span class="fc" id="L658">    }</span>
+
+    public static Double getUserLat()
+    {
+<span class="fc" id="L662">        return userLat;</span>
+    }
+
+    public static Double getUserLong()
+    {
+<span class="fc" id="L667">        return userLong;</span>
+    }
+
+    public static void setUserLat(Double lat)
+    {
+<span class="fc" id="L672">        userLat = lat;</span>
+<span class="fc" id="L673">    }</span>
+
+    public static void setUserLong(Double longitude)
+    {
+<span class="fc" id="L677">        userLong = longitude;</span>
+<span class="fc" id="L678">    }</span>
+
+    public static SharedPreferences getSharedPref()
+    {
+<span class="fc" id="L682">        return sharedPref;</span>
+    }
+
+    // For testing purposes only.
+    public void setForceWebDownload(Boolean forceDownload)
+    {
+<span class="nc" id="L688">        forceWebDownload = forceDownload;</span>
+<span class="nc" id="L689">    }</span>
+
+    public void setDownloadEnabled(Boolean downloadEnabled)
+    {
+<span class="fc" id="L693">        this.downloadEnabled = downloadEnabled;</span>
+<span class="fc" id="L694">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

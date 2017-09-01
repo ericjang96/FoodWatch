@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DownloadFromWeb.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">com.ejang.foodwatch.AsyncTasks</a> &gt; <span class="el_source">DownloadFromWeb.java</span></div><h1>DownloadFromWeb.java</h1><pre class="source lang-java linenums">package com.ejang.foodwatch.AsyncTasks;
+
+/**
+ * Created by Eric on 2017-03-26.
+ */
+
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.ejang.foodwatch.Activities.BaseActivity;
+import com.ejang.foodwatch.Activities.BrowseActivity;
+import com.ejang.foodwatch.BuildConfig;
+import com.ejang.foodwatch.R;
+import com.ejang.foodwatch.SQLDB.DatabaseContract;
+import com.ejang.foodwatch.Utils.InspectionResult;
+import com.ejang.foodwatch.Utils.Restaurant;
+import com.ejang.foodwatch.Views.RestaurantListAdapter;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+
+// Asynchronous task for downloading and processing JSON object from the City of Surrey web API.
+public class DownloadFromWeb extends AsyncTask&lt;JSONObject, String, RestaurantListAdapter&gt;
+{
+    private static final String TAG = &quot;DownloadFromWeb&quot;;
+
+    private BrowseActivity activity;
+    private Boolean updateQuietly;
+    private HashMap&lt;String, ArrayList&lt;InspectionResult&gt;&gt; inspectionDataToReturn;
+    private ArrayList&lt;Restaurant&gt; restaurantDataToReturn;
+    private SQLiteDatabase writeableDB;
+
+    public DownloadFromWeb(BrowseActivity activity, Boolean updateQuietly, SQLiteDatabase writeableDB)
+<span class="fc" id="L47">    {</span>
+        // Only BrowseActivity will directly call this constructor, so we can access its fields.
+<span class="fc" id="L49">        this.activity = activity;</span>
+<span class="fc" id="L50">        this.updateQuietly = updateQuietly;</span>
+<span class="fc" id="L51">        inspectionDataToReturn = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L52">        restaurantDataToReturn = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L53">        this.writeableDB = writeableDB;</span>
+<span class="fc" id="L54">    }</span>
+
+    // This method begins when the HTTP response with inspection data is received. It organizes and
+    // sets BrowseActivity.inspectionData
+    @Override
+    protected RestaurantListAdapter doInBackground(JSONObject... params) {
+
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        while (!activity.dataAndAdapterAvailable.get())</span>
+        {
+            try {
+<span class="nc" id="L64">                Thread.sleep(500);</span>
+<span class="nc" id="L65">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L66">                e.printStackTrace();</span>
+<span class="nc" id="L67">            }</span>
+        }
+<span class="fc" id="L69">        activity.dataAndAdapterAvailable.set(false);</span>
+
+        // Organize all of the data for setting up the adapter and listview.
+<span class="fc" id="L72">        JSONObject response = params[0];</span>
+        try
+        {
+<span class="fc" id="L75">            JSONArray records = response.getJSONObject(&quot;result&quot;).getJSONArray(&quot;records&quot;);</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">            for (int i = 0 ; i &lt; records.length() ; i++)</span>
+            {
+<span class="fc" id="L78">                JSONObject record = records.getJSONObject(i);</span>
+<span class="fc" id="L79">                String date = record.getString(&quot;InspectionDate&quot;);</span>
+<span class="fc" id="L80">                String type = record.getString(&quot;InspType&quot;);</span>
+<span class="fc" id="L81">                String violation = record.getString(&quot;ViolLump&quot;);</span>
+<span class="fc" id="L82">                String hazardRating = record.getString(&quot;HazardRating&quot;);</span>
+<span class="fc" id="L83">                Integer numCrit = record.getInt(&quot;NumCritical&quot;);</span>
+<span class="fc" id="L84">                Integer numNonCrit = record.getInt(&quot;NumNonCritical&quot;);</span>
+<span class="fc" id="L85">                String trackingID = record.getString(&quot;TrackingNumber&quot;);</span>
+<span class="fc" id="L86">                InspectionResult result = new InspectionResult(trackingID, date, type, violation,</span>
+                        hazardRating, numCrit, numNonCrit);
+
+<span class="fc" id="L89">                addInspectionToDB(result);</span>
+<span class="fc" id="L90">                addInspectionToMap(result);</span>
+            }
+
+<span class="fc" id="L93">            activity.setInspectionData(inspectionDataToReturn);</span>
+
+<span class="fc" id="L95">            BaseActivity.logDebug(TAG, &quot;Inspection data set at: &quot; + System.currentTimeMillis(), null);</span>
+<span class="nc" id="L96">        } catch (JSONException e) {</span>
+<span class="nc" id="L97">            e.printStackTrace();</span>
+<span class="fc" id="L98">        }</span>
+
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        while (!activity.locationSet.get())</span>
+        {
+            try {
+<span class="nc" id="L103">                Thread.sleep(500);</span>
+<span class="nc" id="L104">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L105">                e.printStackTrace();</span>
+<span class="nc" id="L106">            }</span>
+        }
+<span class="fc" id="L108">        return null;</span>
+    }
+
+    // Once inspectionData has been set, it is time to handle the restaurant data.
+    @Override
+    protected void onPostExecute(RestaurantListAdapter adapter) {
+<span class="fc" id="L114">        addAllRestaurants();</span>
+<span class="fc" id="L115">    }</span>
+
+    private void addInspectionToDB(InspectionResult inspection)
+    {
+        // Create a new map of values, where column names are the keys
+<span class="fc" id="L120">        ContentValues values = new ContentValues();</span>
+<span class="fc" id="L121">        values.put(DatabaseContract.InspectionTable.COLUMN_TRACKING_ID, inspection.trackingID);</span>
+<span class="fc" id="L122">        values.put(DatabaseContract.InspectionTable.COLUMN_INSPECTION_DATE, inspection.inspectionDateString);</span>
+<span class="fc" id="L123">        values.put(DatabaseContract.InspectionTable.COLUMN_INSPECTION_TYPE, inspection.inspectionType);</span>
+<span class="fc" id="L124">        values.put(DatabaseContract.InspectionTable.COLUMN_INSPECTION_VIOLLUMP, inspection.violLump);</span>
+<span class="fc" id="L125">        values.put(DatabaseContract.InspectionTable.COLUMN_INSPECTION_HAZARD, inspection.hazardRatingString);</span>
+<span class="fc" id="L126">        values.put(DatabaseContract.InspectionTable.COLUMN_INSPECTION_NUM_CRIT, inspection.numCritical);</span>
+<span class="fc" id="L127">        values.put(DatabaseContract.InspectionTable.COLUMN_INSPECTION_NUM_NONCRIT, inspection.numNonCritical);</span>
+
+        // Insert the new row, returning the primary key value of the new row
+<span class="fc" id="L130">        long newRowId = writeableDB.insert(DatabaseContract.InspectionTable.INSPECTION_TABLE_NAME, null, values);</span>
+<span class="fc" id="L131">    }</span>
+
+    // Makes HTTP call to fetch restaurant info and sets BrowseActivity.allRestaurants
+    public void addAllRestaurants() {
+<span class="fc" id="L135">        String url = activity.getString(R.string.url_all_restaurants);</span>
+<span class="fc" id="L136">        RequestQueue queue = Volley.newRequestQueue(activity);</span>
+
+        // This method is only called when a location is set, so make the &quot;no location selected&quot; text
+        // invisible.
+        // activity.findViewById(R.id.no_location_selected_text).setVisibility(View.GONE);
+
+<span class="fc" id="L142">        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,</span>
+<span class="fc" id="L143">                new Response.Listener&lt;JSONObject&gt;() {</span>
+                    @Override
+                    public void onResponse(final JSONObject response)
+                    {
+                        // Once HTTP response with restaurant data is received, start an AsyncTask
+                        // to organize and add all restaurant info to BrowseActivity.allRestaurants
+<span class="fc" id="L149">                        AsyncTask addRestaurants = new AsyncTask()</span>
+<span class="fc" id="L150">                        {</span>
+                            @Override
+                            protected Object doInBackground(Object[] params)
+                            {
+<span class="fc" id="L154">                                BaseActivity.logDebug(TAG, &quot;Got restaurant data response at: &quot; + System.currentTimeMillis(), null);</span>
+                                try
+                                {
+<span class="fc" id="L157">                                    JSONArray restaurants = response.getJSONObject(&quot;result&quot;).getJSONArray(&quot;records&quot;);</span>
+
+<span class="fc bfc" id="L159" title="All 2 branches covered.">                                    for (int i = 0; i &lt; restaurants.length(); i++)</span>
+                                    {
+<span class="fc" id="L161">                                        JSONObject restaurant = restaurants.getJSONObject(i);</span>
+<span class="fc" id="L162">                                        String name = restaurant.getString(&quot;NAME&quot;);</span>
+<span class="fc" id="L163">                                        String addr = restaurant.getString(&quot;PHYSICALADDRESS&quot;);</span>
+<span class="fc" id="L164">                                        Double latitude = restaurant.getDouble(&quot;LATITUDE&quot;);</span>
+<span class="fc" id="L165">                                        Double longitude = restaurant.getDouble(&quot;LONGITUDE&quot;);</span>
+<span class="fc" id="L166">                                        String trackingID = restaurant.getString(&quot;TRACKINGNUMBER&quot;);</span>
+
+                                        Restaurant restaurantEntry;
+<span class="fc bfc" id="L169" title="All 2 branches covered.">                                        if (activity.inspectionData.containsKey(trackingID))</span>
+                                        {
+<span class="fc" id="L171">                                            restaurantEntry = new Restaurant(name, addr, latitude,</span>
+<span class="fc" id="L172">                                                    longitude, trackingID, activity.inspectionData.get(trackingID));</span>
+                                        }
+                                        else
+                                        {
+<span class="fc" id="L176">                                            restaurantEntry = new Restaurant(name, addr, latitude,</span>
+                                                    longitude, trackingID, null);
+                                        }
+<span class="fc" id="L179">                                        restaurantDataToReturn.add(restaurantEntry);</span>
+<span class="fc" id="L180">                                        addRestaurantToDB(restaurantEntry);</span>
+                                    }
+<span class="fc" id="L182">                                    BaseActivity.logDebug(TAG, &quot;Finished adding restaurants to list at: &quot; + System.currentTimeMillis(), null);</span>
+<span class="fc" id="L183">                                    Collections.sort(restaurantDataToReturn, new Comparator&lt;Restaurant&gt;() {</span>
+                                        @Override
+                                        public int compare(Restaurant o1, Restaurant o2) {
+<span class="fc" id="L186">                                            return o1.distanceFromUser.compareTo(o2.distanceFromUser);</span>
+                                        }
+                                    });
+
+                                    // Once all inspection and restaurant data has been processed, save current
+                                    // time to shared pref as the most recent refresh time.
+<span class="fc" id="L192">                                    BrowseActivity.getSharedPref().edit().putLong(activity.getString(R.string.last_refresh_time), System.currentTimeMillis()).commit();</span>
+
+                                }
+<span class="nc" id="L195">                                catch (JSONException e)</span>
+                                {
+<span class="nc" id="L197">                                    BaseActivity.logDebug(TAG, &quot;Caught JSON Exception&quot;, e);</span>
+<span class="fc" id="L198">                                }</span>
+
+<span class="fc" id="L200">                                return null;</span>
+                            }
+
+                            @Override
+                            protected void onPostExecute(Object result) {
+                                // At this point, the database has been fully updated. If the activity
+                                // is destroyed or finishing, do not call any methods that modify the UI.
+<span class="pc bpc" id="L207" title="2 of 4 branches missed.">                                if (activity.isDestroyed() || activity.isFinishing())</span>
+                                {
+<span class="nc" id="L209">                                    this.cancel(true);</span>
+<span class="nc" id="L210">                                    return;</span>
+                                }
+<span class="fc" id="L212">                                activity.setRestaurantData(restaurantDataToReturn);</span>
+<span class="pc bpc" id="L213" title="1 of 2 branches missed.">                                if (!updateQuietly)</span>
+                                {
+<span class="nc" id="L215">                                    activity.initializeListView();</span>
+                                }
+                                else
+                                {
+<span class="fc" id="L219">                                    activity.showRefreshDialog();</span>
+                                }
+<span class="pc bpc" id="L221" title="1 of 2 branches missed.">                                if (!activity.updateCheckerStarted)</span>
+                                {
+<span class="nc" id="L223">                                    activity.startUpdateChecker();</span>
+                                }
+<span class="fc" id="L225">                            }</span>
+                        };
+<span class="fc" id="L227">                        addRestaurants.execute();</span>
+<span class="fc" id="L228">                    }</span>
+<span class="fc" id="L229">                }, new Response.ErrorListener() {</span>
+            @Override
+            public void onErrorResponse(VolleyError error) {
+<span class="nc" id="L232">                BaseActivity.logDebug(TAG, &quot;Volley error getting restaurant data&quot;, error);</span>
+<span class="nc" id="L233">                activity.handleVolleyError(error);</span>
+<span class="nc" id="L234">            }</span>
+        });
+
+<span class="fc" id="L237">        queue.add(jsonRequest);</span>
+<span class="fc" id="L238">        BaseActivity.logDebug(TAG, &quot;Restaurant data request queued at: : &quot; + System.currentTimeMillis(), null);</span>
+<span class="fc" id="L239">    }</span>
+
+    private void addRestaurantToDB(Restaurant restaurant)
+    {
+        // Create a new map of values, where column names are the keys
+<span class="fc" id="L244">        ContentValues values = new ContentValues();</span>
+<span class="fc" id="L245">        values.put(DatabaseContract.RestaurantTable.COLUMN_RES_NAME, restaurant.name);</span>
+<span class="fc" id="L246">        values.put(DatabaseContract.RestaurantTable.COLUMN_TRACKING_ID, restaurant.trackingID);</span>
+<span class="fc" id="L247">        values.put(DatabaseContract.RestaurantTable.COLUMN_RES_ADDRESS, restaurant.address);</span>
+<span class="fc" id="L248">        values.put(DatabaseContract.RestaurantTable.COLUMN_RES_LAT, restaurant.latitude);</span>
+<span class="fc" id="L249">        values.put(DatabaseContract.RestaurantTable.COLUMN_RES_LONG, restaurant.longitude);</span>
+
+        // Insert the new row, returning the primary key value of the new row
+<span class="fc" id="L252">        long newRowId = writeableDB.insert(DatabaseContract.RestaurantTable.RES_TABLE_NAME, null, values);</span>
+<span class="fc" id="L253">    }</span>
+
+    private void addInspectionToMap(InspectionResult inspection)
+    {
+        // If trackingID key exists, add it. If not, create new key.
+<span class="fc bfc" id="L258" title="All 2 branches covered.">        if (inspectionDataToReturn.containsKey(inspection.trackingID))</span>
+        {
+<span class="fc" id="L260">            ArrayList&lt;InspectionResult&gt; inspections = inspectionDataToReturn.get(inspection.trackingID);</span>
+<span class="fc" id="L261">            Integer initialSize = inspections.size();</span>
+            // This loop ensures that the inspections for the same key (trackingID) are organized by the date.
+<span class="pc bpc" id="L263" title="1 of 2 branches missed.">            for (int i = 0 ; i &lt;= initialSize ; i++)</span>
+            {
+<span class="fc bfc" id="L265" title="All 2 branches covered.">                if (i == initialSize)</span>
+                {
+<span class="fc" id="L267">                    inspections.add(inspection);</span>
+<span class="fc" id="L268">                    break;</span>
+                }
+<span class="pc bpc" id="L270" title="1 of 2 branches missed.">                if (BuildConfig.DEBUG)</span>
+                {
+                    // For debug builds, the inspections are organized from oldest to newest. This
+                    // is for testing purposes to avoid dealing with NetstedScrollView and Espresso.
+<span class="fc bfc" id="L274" title="All 2 branches covered.">                    if(inspections.get(i).inspectionDate.after(inspection.inspectionDate))</span>
+                    {
+<span class="fc" id="L276">                        inspections.add(i, inspection);</span>
+<span class="fc" id="L277">                        break;</span>
+                    }
+                }
+                else
+                {
+                    // For all other builds, the inspections are organized from newest to oldest.
+<span class="nc bnc" id="L283" title="All 2 branches missed.">                    if(inspections.get(i).inspectionDate.before(inspection.inspectionDate))</span>
+                    {
+<span class="nc" id="L285">                        inspections.add(i, inspection);</span>
+<span class="nc" id="L286">                        break;</span>
+                    }
+                }
+            }
+<span class="fc" id="L290">        }</span>
+        else
+        {
+<span class="fc" id="L293">            ArrayList&lt;InspectionResult&gt; inspectionResults = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L294">            inspectionResults.add(inspection);</span>
+<span class="fc" id="L295">            inspectionDataToReturn.put(inspection.trackingID, inspectionResults);</span>
+        }
+<span class="fc" id="L297">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

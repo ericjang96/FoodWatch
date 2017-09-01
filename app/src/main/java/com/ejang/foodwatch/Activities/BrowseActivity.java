@@ -79,7 +79,7 @@ public class BrowseActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
+        downloadEnabled = getIntent().getBooleanExtra("downloadEnabled", true);
         // Prevents another activity from being started if another instance of it is already running.
         if (!isTaskRoot())
         {
@@ -300,6 +300,7 @@ public class BrowseActivity extends BaseActivity {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
+                handleVolleyError(error);
                 logDebug(TAG, "Volley for inspection data failed", error);
 
             }
@@ -597,7 +598,7 @@ public class BrowseActivity extends BaseActivity {
         }
         else
         {
-            scheduler.scheduleAtFixedRate(updateChecker, 2, 2, TimeUnit.SECONDS);
+            scheduler.scheduleAtFixedRate(updateChecker, 3, 180, TimeUnit.SECONDS);
         }
         updateCheckerStarted = true;
     }

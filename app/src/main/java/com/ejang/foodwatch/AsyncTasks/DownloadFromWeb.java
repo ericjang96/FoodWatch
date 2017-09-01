@@ -191,7 +191,8 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                                     // time to shared pref as the most recent refresh time.
                                     BrowseActivity.getSharedPref().edit().putLong(activity.getString(R.string.last_refresh_time), System.currentTimeMillis()).commit();
 
-                                } catch (JSONException e)
+                                }
+                                catch (JSONException e)
                                 {
                                     BaseActivity.logDebug(TAG, "Caught JSON Exception", e);
                                 }

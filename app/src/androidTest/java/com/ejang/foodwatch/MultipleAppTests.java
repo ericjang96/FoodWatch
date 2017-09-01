@@ -2,6 +2,7 @@ package com.ejang.foodwatch;
 
 import android.content.Context;
 import android.content.Intent;
+import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SdkSuppress;
 import android.support.test.runner.AndroidJUnit4;
@@ -31,7 +32,7 @@ import static org.hamcrest.Matchers.notNullValue;
 @SdkSuppress(minSdkVersion = 18)
 public class MultipleAppTests {
 
-        private static final String BASIC_SAMPLE_PACKAGE
+        private static final String FOODWATCH_PACKAGE
                 = "com.ejang.foodwatch";
         private static final int LAUNCH_TIMEOUT = 5000;
         private static final String NEW_LISTVIEW_CAPTION = "Restaurants Near King George Station";
@@ -54,18 +55,20 @@ public class MultipleAppTests {
             // Launch the app
             Context context = InstrumentationRegistry.getContext();
             final Intent intent = context.getPackageManager()
-                    .getLaunchIntentForPackage(BASIC_SAMPLE_PACKAGE);
+                    .getLaunchIntentForPackage(FOODWATCH_PACKAGE);
             // Clear out any previous instances
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.putExtra("downloadEnabled", false);
             context.startActivity(intent);
 
+
             // Wait for the app to appear
-            mDevice.wait(Until.hasObject(By.pkg(BASIC_SAMPLE_PACKAGE).depth(0)),
+            mDevice.wait(Until.hasObject(By.pkg(FOODWATCH_PACKAGE).depth(0)),
                     LAUNCH_TIMEOUT);
         }
 
         @Test
-        public void testNothing() throws UiObjectNotFoundException {
+        public void testChangeLocation() throws UiObjectNotFoundException {
             // Click the location FAB button on the BrowseActivity UI which takes us to the Google Place Picker
             UiObject locationButton = mDevice.findObject(new UiSelector()
                     .className("android.widget.ImageButton")

@@ -45,6 +45,9 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
     boolean dbCopySuccess;
     private static Boolean activityVisible;
 
+    // Fields used for testing purposes:
+    public Boolean volleyErrorVisible = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -159,11 +162,22 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
 
         if (error instanceof TimeoutError || error instanceof NoConnectionError)
         {
-            builder.setMessage("There was a network error while communicating with the City of Surrey Website. Please make sure your internet works, and try restarting the app.");
+            builder.setMessage("There was a network error while communicating with the City of Surrey Website. " +
+                    "Please make sure your internet works, and try restarting the app.\n\nYou can choose to ignore and continue browsing locally stored data.");
         }
         else
         {
-            builder.setMessage("Unexpected error occurred while communicating with the City of Surrey Website: " + trimErrorMessage(String.valueOf(error.networkResponse.data), "message"));
+            if (error.networkResponse != null && error.networkResponse.data != null)
+            {
+                builder.setMessage("Unexpected error occurred while communicating with the City of Surrey Website: "
+                        + trimErrorMessage(String.valueOf(error.networkResponse.data), "message")
+                        + "\n\nYou can choose to ignore and continue browsing locally stored data.");
+            }
+            else
+            {
+                builder.setMessage("Unexpected error occurred while communicating with the City of Surrey Website. " +
+                        "\n\nYou can choose to ignore and continue browsing locally stored data.");
+            }
         }
         // Set the positive/yes button click listener
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -176,6 +190,7 @@ public class BaseActivity extends AppCompatActivity implements NavigationView.On
         AlertDialog dialog = builder.create();
         // Display the alert dialog on interface
         dialog.show();
+        volleyErrorVisible = true;
     }
 
     // Helper to extract and trim the error message.

@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BaseActivity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">app</a> &gt; <a href="index.source.html" class="el_package">com.ejang.foodwatch.Activities</a> &gt; <span class="el_source">BaseActivity.java</span></div><h1>BaseActivity.java</h1><pre class="source lang-java linenums">package com.ejang.foodwatch.Activities;
+
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.MenuItem;
+
+import com.android.volley.NoConnectionError;
+import com.android.volley.TimeoutError;
+import com.android.volley.VolleyError;
+import com.ejang.foodwatch.BuildConfig;
+import com.ejang.foodwatch.R;
+import com.ejang.foodwatch.SQLDB.DatabaseContract.DatabaseHelper;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+
+import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
+
+
+// TODO: Add another activity for restaurant details when listview item is clicked
+// TODO: Consider uploading to GooglePlay at this point
+// TODO: Add notification to navigation bar and allow users to be emailed or sent notifs
+// TODO: Add favorite option to filter results. Users can favorite restaurants in the new activity
+
+// This class handles all of the navigation bar and toolbar initialization.
+<span class="fc" id="L37">public class BaseActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {</span>
+
+    DrawerLayout drawerLayout;
+    ActionBarDrawerToggle actionBarDrawerToggle;
+    Toolbar toolbar;
+    Integer currentView;
+    NavigationView navigationView;
+    DatabaseHelper dbHelper;
+    boolean dbCopySuccess;
+    private static Boolean activityVisible;
+
+    // Fields used for testing purposes:
+<span class="fc" id="L49">    public Boolean volleyErrorVisible = false;</span>
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+<span class="fc" id="L53">        super.onCreate(savedInstanceState);</span>
+
+<span class="fc" id="L55">        setContentView(R.layout.activity_main);</span>
+<span class="fc" id="L56">        navigationView = (NavigationView) findViewById(R.id.nav_view);</span>
+
+<span class="fc" id="L58">        toolbar = (Toolbar) findViewById(R.id.toolbar);</span>
+<span class="fc" id="L59">        setSupportActionBar(toolbar);</span>
+<span class="fc" id="L60">        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);</span>
+<span class="fc" id="L61">        actionBarDrawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);</span>
+<span class="fc" id="L62">        drawerLayout.addDrawerListener(actionBarDrawerToggle);</span>
+
+<span class="fc" id="L64">        navigationView.setNavigationItemSelectedListener(this);</span>
+        // Set the database helper which will be used to access the DB
+<span class="fc" id="L66">        dbHelper = new DatabaseHelper(this);</span>
+
+        try
+        {
+            // Create a default DB with contents from the DB file in the assets folder. If already
+            // exists, does nothing.
+<span class="fc" id="L72">            dbHelper.createDefaultDB();</span>
+<span class="fc" id="L73">            dbCopySuccess = true;</span>
+        }
+<span class="nc" id="L75">        catch (IOException e)</span>
+        {
+            // When the UI thread sees that the copy was unsuccessful, it will download from the web
+            // API instead of using the default DB.
+<span class="nc" id="L79">            dbCopySuccess = false;</span>
+<span class="fc" id="L80">        }</span>
+<span class="fc" id="L81">    }</span>
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+<span class="fc" id="L85">        super.onPostCreate(savedInstanceState);</span>
+
+<span class="fc" id="L87">        actionBarDrawerToggle.syncState();</span>
+<span class="fc" id="L88">    }</span>
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+<span class="pc bpc" id="L92" title="1 of 3 branches missed.">        switch (item.getItemId()) {</span>
+
+            // Handles selection of navigation buttons. If button for current activity is pressed,
+            // close navigation bar and do nothing.
+            case R.id.nav_restaurant:
+<span class="pc bpc" id="L97" title="2 of 4 branches missed.">                if (currentView == null || currentView != R.id.nav_restaurant)</span>
+                {
+<span class="fc" id="L99">                    Intent anIntent = new Intent(getApplicationContext(), BrowseActivity.class);</span>
+<span class="fc" id="L100">                    anIntent.addFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);</span>
+<span class="fc" id="L101">                    startActivity(anIntent);</span>
+                }
+<span class="fc" id="L103">                drawerLayout.closeDrawers();</span>
+<span class="fc" id="L104">                break;</span>
+            case R.id.nav_about:
+<span class="pc bpc" id="L106" title="2 of 4 branches missed.">                if (currentView == null || currentView != R.id.nav_about)</span>
+                {
+<span class="fc" id="L108">                    Intent anIntent = new Intent(getApplicationContext(), AboutActivity.class);</span>
+<span class="fc" id="L109">                    anIntent.addFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);</span>
+<span class="fc" id="L110">                    startActivity(anIntent);</span>
+                }
+<span class="fc" id="L112">                drawerLayout.closeDrawers();</span>
+                break;
+        }
+<span class="fc" id="L115">        return false;</span>
+    }
+
+    // Opening and closing database is expensive, so keep it open and close it when the activity
+    // is destroyed.
+    @Override
+    protected void onDestroy()
+    {
+<span class="fc" id="L123">        super.onDestroy();</span>
+<span class="fc" id="L124">    }</span>
+
+    @Override
+    protected void onResume() {
+<span class="fc" id="L128">        super.onResume();</span>
+<span class="fc" id="L129">        activityVisible = true;</span>
+<span class="fc" id="L130">    }</span>
+
+    @Override
+    protected void onPause() {
+<span class="fc" id="L134">        super.onPause();</span>
+<span class="fc" id="L135">        activityVisible = false;</span>
+<span class="fc" id="L136">    }</span>
+
+    @Override
+    public void onBackPressed() {
+        // If drawer is open, back button closes it. If not, return to last content.
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        if (drawerLayout.isDrawerOpen(GravityCompat.START))</span>
+        {
+<span class="fc" id="L143">            drawerLayout.closeDrawers();</span>
+        }
+        else
+        {
+<span class="nc" id="L147">            super.onBackPressed();</span>
+        }
+<span class="fc" id="L149">    }</span>
+
+    // Helper for handling all Volley errors.
+    public void handleVolleyError(VolleyError error)
+    {
+        // Build an AlertDialog
+<span class="fc" id="L155">        AlertDialog.Builder builder = new AlertDialog.Builder(this);</span>
+
+        // Specify the dialog is cancelable
+<span class="fc" id="L158">        builder.setCancelable(true);</span>
+
+        // Set a title for alert dialog
+<span class="fc" id="L161">        builder.setTitle(&quot;Network Error&quot;);</span>
+
+<span class="pc bpc" id="L163" title="2 of 4 branches missed.">        if (error instanceof TimeoutError || error instanceof NoConnectionError)</span>
+        {
+<span class="fc" id="L165">            builder.setMessage(&quot;There was a network error while communicating with the City of Surrey Website. &quot; +</span>
+                    &quot;Please make sure your internet works, and try restarting the app.\n\nYou can choose to ignore and continue browsing locally stored data.&quot;);
+        }
+        else
+        {
+<span class="nc bnc" id="L170" title="All 4 branches missed.">            if (error.networkResponse != null &amp;&amp; error.networkResponse.data != null)</span>
+            {
+<span class="nc" id="L172">                builder.setMessage(&quot;Unexpected error occurred while communicating with the City of Surrey Website: &quot;</span>
+<span class="nc" id="L173">                        + trimErrorMessage(String.valueOf(error.networkResponse.data), &quot;message&quot;)</span>
+                        + &quot;\n\nYou can choose to ignore and continue browsing locally stored data.&quot;);
+            }
+            else
+            {
+<span class="nc" id="L178">                builder.setMessage(&quot;Unexpected error occurred while communicating with the City of Surrey Website. &quot; +</span>
+                        &quot;\n\nYou can choose to ignore and continue browsing locally stored data.&quot;);
+            }
+        }
+        // Set the positive/yes button click listener
+<span class="fc" id="L183">        builder.setPositiveButton(&quot;OK&quot;, new DialogInterface.OnClickListener() {</span>
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+<span class="nc" id="L187">            }</span>
+        });
+
+<span class="fc" id="L190">        AlertDialog dialog = builder.create();</span>
+        // Display the alert dialog on interface
+<span class="fc" id="L192">        dialog.show();</span>
+<span class="fc" id="L193">        volleyErrorVisible = true;</span>
+<span class="fc" id="L194">    }</span>
+
+    // Helper to extract and trim the error message.
+    public static String trimErrorMessage(String json, String key)
+    {
+        String trimmedString;
+        try
+        {
+<span class="fc" id="L202">            JSONObject obj = new JSONObject(json);</span>
+<span class="fc" id="L203">            trimmedString = obj.getString(key);</span>
+        }
+<span class="nc" id="L205">        catch(JSONException e)</span>
+        {
+<span class="nc" id="L207">            e.printStackTrace();</span>
+            // Hopefully it doesn't get to this point ever.
+<span class="nc" id="L209">            trimmedString = &quot;Unknown network error&quot;;</span>
+<span class="fc" id="L210">        }</span>
+<span class="pc bpc" id="L211" title="2 of 4 branches missed.">        if (trimmedString == null || trimmedString.length() == 0)</span>
+        {
+<span class="nc" id="L213">            trimmedString = &quot;Unknown network error&quot;;</span>
+        }
+
+<span class="fc" id="L216">        return trimmedString;</span>
+
+    }
+
+    public void setCurrentNavView(Integer layout)
+    {
+<span class="fc" id="L222">        currentView = layout;</span>
+<span class="fc" id="L223">    }</span>
+
+    public static void logDebug(String tag, String message, Throwable error)
+    {
+<span class="pc bpc" id="L227" title="1 of 2 branches missed.">        if (BuildConfig.DEBUG)</span>
+        {
+<span class="fc bfc" id="L229" title="All 2 branches covered.">            if (error != null)</span>
+            {
+<span class="fc" id="L231">                Log.d(tag, message, error);</span>
+            }
+            else
+            {
+<span class="fc" id="L235">                Log.d(tag, message);</span>
+            }
+        }
+<span class="fc" id="L238">    }</span>
+
+    public static Boolean isActivityVisible()
+    {
+<span class="fc" id="L242">        return activityVisible;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>
