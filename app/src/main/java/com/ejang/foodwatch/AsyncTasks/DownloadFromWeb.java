@@ -146,7 +146,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                     {
                         // Once HTTP response with restaurant data is received, start an AsyncTask
                         // to organize and add all restaurant info to BrowseActivity.allRestaurants
-                        AsyncTask addRestaurants = new AsyncTask()
+                        activity.addRestaurantsTask = new AsyncTask()
                         {
                             @Override
                             protected Object doInBackground(Object[] params)
@@ -224,7 +224,7 @@ public class DownloadFromWeb extends AsyncTask<JSONObject, String, RestaurantLis
                                 }
                             }
                         };
-                        addRestaurants.execute();
+                        activity.addRestaurantsTask.execute();
                     }
                 }, new Response.ErrorListener() {
             @Override

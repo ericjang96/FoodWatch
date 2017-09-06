@@ -72,6 +72,8 @@ public class BrowseActivity extends BaseActivity {
     private FloatingActionButton locationFab;
     private Boolean dataUpdateAvailable;
     public FloatingSearchView floatingSearchView;
+    private DownloadFromWeb downloadFromWebTask;
+    public AsyncTask addRestaurantsTask;
     // Variables declared after this point are for testing purposes only.
     private Boolean forceWebDownload = false;
     private Boolean downloadEnabled = true;
@@ -190,9 +192,15 @@ public class BrowseActivity extends BaseActivity {
             restaurantListAdapter.getFilter().filter(floatingSearchView.getQuery());
         }
         // If filter search button clicked, bring up dialog listing the filter options.
-        if (id == R.id.action_filter_by_safety)
+        else if (id == R.id.action_filter_by_safety)
         {
             showFilterDialog();
+        }
+        else if (id == R.id.action_update_data)
+        {
+            downloadRestaurantsAndInspections(true);
+            Toast toast = Toast.makeText(BrowseActivity.this, "Update started", Toast.LENGTH_LONG);
+            toast.show();
         }
 
         return super.onOptionsItemSelected(item);
@@ -281,6 +289,16 @@ public class BrowseActivity extends BaseActivity {
 
     private void downloadRestaurantsAndInspections(final Boolean updateQuietly)
     {
+        // Only run if there are no other running instances of the relevant AsyncTasks.
+        if (downloadFromWebTask != null && downloadFromWebTask.getStatus() == AsyncTask.Status.RUNNING)
+        {
+            return;
+        }
+        else if (addRestaurantsTask != null && addRestaurantsTask.getStatus() == AsyncTask.Status.RUNNING)
+        {
+            return;
+        }
+
         if (!updateQuietly)
         {
             findViewById(R.id.init_bubble).setVisibility(View.VISIBLE);
@@ -295,7 +313,8 @@ public class BrowseActivity extends BaseActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         // Start AsyncTask to download/organize the inspection and restaurant data.
-                        new DownloadFromWeb(BrowseActivity.this, updateQuietly, writeableDB).execute(response);
+                        downloadFromWebTask = new DownloadFromWeb(BrowseActivity.this, updateQuietly, writeableDB);
+                        downloadFromWebTask.execute(response);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -529,8 +548,8 @@ public class BrowseActivity extends BaseActivity {
         builder.setCancelable(true);
 
         // Set a title for alert dialog
-        builder.setTitle("Update Inspection Data");
-        builder.setMessage("Check for new data from the City of Surrey and update your restaurants?");
+        builder.setTitle("Data Recently Updated");
+        builder.setMessage("Restaurant and inspection data has been updated. Would you like to refresh the restaurant list to reflect the updates?");
 
         // Set the positive/yes button click listener
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -539,7 +558,7 @@ public class BrowseActivity extends BaseActivity {
                 // Do something when click positive button
                 restaurantListAdapter.updateAdapterData(allRestaurants);
 
-                Toast toast = Toast.makeText(BrowseActivity.this, "Update was successful", Toast.LENGTH_LONG);
+                Toast toast = Toast.makeText(BrowseActivity.this, "Refresh was successful", Toast.LENGTH_LONG);
                 toast.show();
                 // initializeListView();
                 dataUpdateAvailable = false;
