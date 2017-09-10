@@ -7,7 +7,7 @@ This is an Android app that lets users quickly browse and search restaurant heal
 </div>
 
 ### How to try the app (Installs a release version of the app):
-1. Download the [APK File](https://github.com/ericjang96/FoodWatch/releases/download/0.1.2/app-release.apk)
+1. Download the [APK File](https://github.com/ericjang96/FoodWatch/releases/download/0.1.3/app-release.apk)
 2. Move the file to a physical device or Android emulator with API level 23 or higher
 3. Find the file on your device and tap it to install the app (you may need to modify security settings to allow installation of apk files from unknown sources.)
 
